@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local AI — A Field Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500;8..60,600;8..60,700;8..60,900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --stanford-red: #8C1515;
+  --stanford-red-deep: #5E0B0B;
+  --black: #000000;
+  --white: #FFFFFF;
+  --ink: #111111;
+  --rule: #E6E6E6;
+  --soft: #F6F4F1;
+  --serif: 'Source Serif 4', Georgia, serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ====== TOP RAIL ====== */
+.rail {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  background: var(--white);
+  border-bottom: 1px solid var(--rule);
+  z-index: 50;
+}
+.rail::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--stanford-red);
+}
+.rail-left {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--black);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 4px;
+}
+.rail-left .mark {
+  display: inline-block;
+  width: 10px; height: 10px;
+  background: var(--stanford-red);
+  transform: rotate(45deg);
+}
+.rail-right {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--black);
+  padding-top: 4px;
+}
+.rail-right span.sep { color: var(--rule); margin: 0 8px; }
+.rail-right .current { color: var(--stanford-red); font-weight: 700; }
+
+/* ====== SLIDE STAGE ====== */
+.stage {
+  position: fixed;
+  top: 44px; left: 0; right: 0; bottom: 56px;
+  overflow: hidden;
+}
+.deck {
+  width: 100%; height: 100%;
+  position: relative;
+}
+.slide {
+  position: absolute;
+  inset: 0;
+  padding: 56px 80px 40px;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 380ms ease, transform 380ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  overflow-y: auto;
+}
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.slide.prev {
+  transform: translateX(-40px);
+}
+
+/* ====== TYPOGRAPHY ====== */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--stanford-red);
+  font-weight: 500;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.eyebrow::after {
+  content: "";
+  flex: 1;
+  max-width: 80px;
+  height: 1px;
+  background: var(--stanford-red);
+}
+
+h1.title {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: clamp(34px, 4.4vw, 64px);
+  line-height: 1.04;
+  letter-spacing: -0.022em;
+  color: var(--black);
+  margin-bottom: 20px;
+  max-width: 18ch;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--stanford-red);
+  font-weight: 700;
+}
+
+h2.section {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(28px, 3.2vw, 46px);
+  line-height: 1.08;
+  letter-spacing: -0.018em;
+  color: var(--black);
+  margin-bottom: 12px;
+}
+h2.section em { font-style: italic; color: var(--stanford-red); }
+
+.lede {
+  font-family: var(--serif);
+  font-size: clamp(18px, 1.5vw, 22px);
+  line-height: 1.45;
+  color: var(--ink);
+  max-width: 60ch;
+  margin-bottom: 28px;
+  font-weight: 400;
+}
+
+p.body, li.body {
+  font-family: var(--serif);
+  font-size: clamp(15px, 1.15vw, 18px);
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.kicker {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--black);
+  opacity: 0.55;
+}
+
+/* ====== COVER SLIDE ====== */
+.cover {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 60px;
+  height: 100%;
+  align-items: center;
+  padding: 40px 80px;
+}
+.cover-left .cover-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--stanford-red);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.cover-left .cover-meta .bar {
+  width: 36px; height: 2px; background: var(--stanford-red);
+}
+.cover-left h1 {
+  font-family: var(--serif);
+  font-weight: 900;
+  font-size: clamp(56px, 7.5vw, 120px);
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  color: var(--black);
+  margin-bottom: 24px;
+}
+.cover-left h1 .accent {
+  color: var(--stanford-red);
+  font-style: italic;
+  font-weight: 700;
+}
+.cover-left .cover-sub {
+  font-family: var(--serif);
+  font-size: clamp(18px, 1.6vw, 24px);
+  font-style: italic;
+  color: var(--ink);
+  max-width: 30ch;
+  line-height: 1.4;
+  margin-bottom: 36px;
+}
+.cover-left .byline {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--black);
+  display: flex;
+  gap: 28px;
+  border-top: 1px solid var(--rule);
+  padding-top: 18px;
+  max-width: 460px;
+}
+.cover-left .byline div span { display: block; opacity: 0.5; margin-bottom: 4px; }
+.cover-right {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cover-art {
+  width: 100%; max-width: 460px; aspect-ratio: 1 / 1;
+  position: relative;
+}
+.cover-art svg { width: 100%; height: 100%; display: block; }
+
+/* ====== COLUMNS ====== */
+.cols-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-top: 8px;
+}
+.cols-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+  margin-top: 8px;
+}
+.split {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 56px;
+  flex: 1;
+  align-items: start;
+}
+
+/* ====== CARDS / BLOCKS ====== */
+.card {
+  border: 1px solid var(--rule);
+  padding: 22px 24px;
+  background: var(--white);
+  position: relative;
+}
+.card.dark {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+}
+.card.red {
+  background: var(--stanford-red);
+  color: var(--white);
+  border-color: var(--stanford-red);
+}
+.card .num {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--stanford-red);
+  margin-bottom: 10px;
+  display: block;
+}
+.card.dark .num, .card.red .num { color: var(--white); opacity: 0.8; }
+.card h3 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(18px, 1.4vw, 22px);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.card p {
+  font-family: var(--serif);
+  font-size: clamp(13px, 1vw, 15px);
+  line-height: 1.5;
+}
+.card .accent-bar {
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 28px;
+  background: var(--stanford-red);
+}
+.card.dark .accent-bar, .card.red .accent-bar { background: var(--white); }
+
+/* ====== DEFINITION LIST ====== */
+.defs { margin-top: 8px; }
+.defs .row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 28px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: baseline;
+}
+.defs .row:last-child { border-bottom: none; }
+.defs .term {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--stanford-red);
+  font-weight: 500;
+}
+.defs .def {
+  font-family: var(--serif);
+  font-size: clamp(14px, 1.05vw, 17px);
+  line-height: 1.5;
+  color: var(--ink);
+}
+.defs .def strong { color: var(--black); font-weight: 600; }
+
+/* ====== CODE ====== */
+pre.code {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  background: var(--black);
+  color: var(--white);
+  padding: 18px 22px;
+  border-left: 4px solid var(--stanford-red);
+  overflow-x: auto;
+  margin: 12px 0;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+pre.code .c-key { color: #ff8a8a; }
+pre.code .c-str { color: #ffd2a8; }
+pre.code .c-cm  { color: #888; font-style: italic; }
+pre.code .c-tok { color: #FFFFFF; font-weight: 600; }
+code.inline {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--soft);
+  padding: 1px 6px;
+  border-bottom: 2px solid var(--stanford-red);
+  color: var(--black);
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
+/* ====== TABLE ====== */
+table.compare {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-family: var(--serif);
+}
+table.compare th {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 12px 14px;
+  background: var(--black);
+  color: var(--white);
+  font-weight: 500;
+}
+table.compare th:first-child { background: var(--stanford-red); }
+table.compare td {
+  padding: 14px;
+  border-bottom: 1px solid var(--rule);
+  font-size: clamp(13px, 1vw, 15px);
+  line-height: 1.45;
+  vertical-align: top;
+}
+table.compare td:first-child {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--stanford-red);
+  font-weight: 500;
+  width: 180px;
+}
+table.compare tr:hover td { background: var(--soft); }
+
+/* ====== PIPELINE ====== */
+.pipeline {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.pipeline .step {
+  flex: 1;
+  min-width: 140px;
+  background: var(--white);
+  border: 1px solid var(--black);
+  padding: 18px 16px;
+  position: relative;
+  margin-right: 14px;
+  margin-bottom: 14px;
+}
+.pipeline .step:last-child { margin-right: 0; }
+.pipeline .step .step-n {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--stanford-red);
+  margin-bottom: 6px;
+}
+.pipeline .step h4 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+.pipeline .step p {
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.pipeline .step::after {
+  content: "→";
+  position: absolute;
+  right: -16px; top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  color: var(--stanford-red);
+  font-size: 16px;
+  font-weight: 700;
+}
+.pipeline .step:last-child::after { display: none; }
+
+/* ====== TAG LIST ====== */
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--soft);
+  border: 1px solid var(--rule);
+  color: var(--black);
+  letter-spacing: 0.06em;
+}
+.tag.red { background: var(--stanford-red); color: var(--white); border-color: var(--stanford-red); }
+.tag.dark { background: var(--black); color: var(--white); border-color: var(--black); }
+
+/* ====== STAT ====== */
+.stat-row { display: flex; gap: 40px; margin-top: 16px; flex-wrap: wrap; }
+.stat { border-left: 3px solid var(--stanford-red); padding-left: 14px; }
+.stat .n {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: clamp(28px, 3vw, 42px);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--black);
+}
+.stat .l {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--black);
+  margin-top: 6px;
+  opacity: 0.7;
+}
+
+/* ====== BOTTOM NAV ====== */
+.nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 56px;
+  background: var(--white);
+  border-top: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  justify-content: space-between;
+  z-index: 50;
+}
+.nav-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid var(--black);
+  color: var(--black);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-weight: 500;
+}
+.nav-btn:hover {
+  background: var(--stanford-red);
+  border-color: var(--stanford-red);
+  color: var(--white);
+}
+.nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.nav-btn:disabled:hover { background: none; color: var(--black); border-color: var(--black); }
+
+.dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.dot {
+  width: 8px; height: 8px;
+  border: 1px solid var(--black);
+  background: var(--white);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.dot.active {
+  background: var(--stanford-red);
+  border-color: var(--stanford-red);
+  transform: scale(1.2);
+}
+.dot:hover { background: var(--black); }
+.dot.active:hover { background: var(--stanford-red); }
+
+/* ====== CLOSING SLIDE ====== */
+.closing {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 40px;
+}
+.closing .big-mark {
+  font-family: var(--serif);
+  font-weight: 900;
+  font-size: clamp(80px, 12vw, 200px);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--stanford-red);
+  font-style: italic;
+}
+.closing .resources {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  border-top: 1px solid var(--black);
+  padding-top: 24px;
+}
+.closing .resources .res .lab {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stanford-red);
+  margin-bottom: 6px;
+}
+.closing .resources .res .val {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--black);
+}
+.closing .resources .res .desc {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.4;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+/* ====== UTIL ====== */
+.bullet-list { list-style: none; margin-top: 8px; }
+.bullet-list li {
+  font-family: var(--serif);
+  font-size: clamp(14px, 1.05vw, 17px);
+  line-height: 1.5;
+  padding-left: 22px;
+  position: relative;
+  margin-bottom: 10px;
+}
+.bullet-list li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0.6em;
+  width: 10px; height: 1.5px;
+  background: var(--stanford-red);
+}
+.bullet-list li strong { color: var(--black); font-weight: 600; }
+.bullet-list li code { 
+  font-family: var(--mono); font-size: 0.82em;
+  background: var(--soft); padding: 1px 5px;
+  border-bottom: 1.5px solid var(--stanford-red);
+}
+
+.flag {
+  display: inline-block;
+  background: var(--stanford-red);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 900px) {
+  .slide { padding: 40px 28px 28px; }
+  .cover { grid-template-columns: 1fr; padding: 32px 28px; gap: 24px; }
+  .cover-right { display: none; }
+  .cols-2, .cols-3, .split { grid-template-columns: 1fr; gap: 20px; }
+  .defs .row { grid-template-columns: 1fr; gap: 4px; }
+  .closing .resources { grid-template-columns: 1fr 1fr; }
+  .pipeline .step::after { display: none; }
+  .pipeline .step { margin-right: 0; }
+}
+
+/* fullscreen tweak */
+.slide::-webkit-scrollbar { width: 6px; }
+.slide::-webkit-scrollbar-thumb { background: var(--stanford-red); }
+.slide::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+
+<!-- TOP RAIL -->
+<div class="rail">
+  <div class="rail-left">
+    <span class="mark"></span>
+    <span>Local AI &nbsp;·&nbsp; A Field Guide</span>
+  </div>
+  <div class="rail-right">
+    <span id="section-label">COVER</span>
+    <span class="sep">/</span>
+    <span class="current" id="slide-num">01</span>
+    <span class="sep">/</span>
+    <span id="slide-total">19</span>
+  </div>
+</div>
+
+<!-- DECK -->
+<div class="stage">
+<div class="deck" id="deck">
+
+  <!-- SLIDE 01 - COVER -->
+  <section class="slide active" data-section="Cover">
+    <div class="cover">
+      <div class="cover-left">
+        <div class="cover-meta"><span class="bar"></span> A Comprehensive Field Guide · 2026</div>
+        <h1>Local <span class="accent">AI.</span><br>Off the cloud,<br>on your machine.</h1>
+        <div class="cover-sub">The concepts you actually need to understand before you download your first GGUF file.</div>
+        <div class="byline">
+          <div><span>Topic</span>Foundations</div>
+          <div><span>Slides</span>Nineteen</div>
+          <div><span>Reading</span>~14 min</div>
+        </div>
+      </div>
+      <div class="cover-right">
+        <div class="cover-art">
+          <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <!-- background grid -->
+            <defs>
+              <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#E6E6E6" stroke-width="0.5"/>
+              </pattern>
+            </defs>
+            <rect width="400" height="400" fill="url(#grid)"/>
+            <!-- big red square -->
+            <rect x="60" y="60" width="200" height="200" fill="#8C1515"/>
+            <!-- black square overlap -->
+            <rect x="160" y="160" width="180" height="180" fill="#000000"/>
+            <!-- inner white -->
+            <rect x="200" y="200" width="100" height="100" fill="#FFFFFF"/>
+            <!-- crosshair -->
+            <line x1="250" y1="180" x2="250" y2="320" stroke="#FFFFFF" stroke-width="1"/>
+            <line x1="180" y1="250" x2="320" y2="250" stroke="#FFFFFF" stroke-width="1"/>
+            <!-- accent dots -->
+            <circle cx="80" cy="80" r="4" fill="#FFFFFF"/>
+            <circle cx="240" cy="80" r="4" fill="#FFFFFF"/>
+            <circle cx="80" cy="240" r="4" fill="#FFFFFF"/>
+            <!-- corner label -->
+            <text x="68" y="80" font-family="JetBrains Mono, monospace" font-size="10" fill="#FFFFFF" letter-spacing="2">01</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 02 - WHY LOCAL -->
+  <section class="slide" data-section="Why">
+    <div class="eyebrow">Why bother — 02</div>
+    <h2 class="section">The cloud is fine, until it <em>isn't.</em></h2>
+    <p class="lede">Local AI flips the model. Your hardware, your weights, your data — no API key, no rate limits, no third party reading your prompts.</p>
+    <div class="cols-3">
+      <div class="card"><span class="accent-bar"></span><span class="num">01</span><h3>Privacy</h3><p>Sensitive prompts never leave the device. Crucial for legal, medical, internal, and personal data.</p></div>
+      <div class="card"><span class="accent-bar"></span><span class="num">02</span><h3>Cost</h3><p>No per-token billing. Once you own the GPU, marginal cost approaches zero.</p></div>
+      <div class="card"><span class="accent-bar"></span><span class="num">03</span><h3>Latency</h3><p>No network round-trip. Tools and agents respond as fast as your hardware allows.</p></div>
+      <div class="card dark"><span class="accent-bar"></span><span class="num">04</span><h3>Offline</h3><p>Airplanes, secure facilities, remote sites. Inference doesn't require connectivity.</p></div>
+      <div class="card dark"><span class="accent-bar"></span><span class="num">05</span><h3>Control</h3><p>Pin a model version forever. No silent upgrades changing behavior overnight.</p></div>
+      <div class="card red"><span class="accent-bar"></span><span class="num">06</span><h3>Customization</h3><p>Fine-tune, quantize, swap samplers, edit chat templates. Frontier APIs offer none of this.</p></div>
+    </div>
+  </section>
+
+  <!-- SLIDE 03 - ANATOMY -->
+  <section class="slide" data-section="Fundamentals">
+    <div class="eyebrow">Fundamentals — 03</div>
+    <h2 class="section">Anatomy of a <em>language model.</em></h2>
+    <p class="lede">Before runtimes and quantization, three numbers define what a model is and what it can do.</p>
+    <div class="defs">
+      <div class="row">
+        <div class="term">Parameters</div>
+        <div class="def"><strong>The learned weights.</strong> Sized in billions: 1B, 7B, 13B, 70B, 405B. More parameters generally mean stronger reasoning — but also more VRAM. Mainstream local sweet spots: <code class="inline">7B–14B</code> for everyday, <code class="inline">30B–70B</code> for serious work.</div>
+      </div>
+      <div class="row">
+        <div class="term">Context Window</div>
+        <div class="def"><strong>How many tokens the model can see at once.</strong> Modern locals range from 8K to 128K to 1M tokens. Longer context costs more memory because of the KV cache (more on that later).</div>
+      </div>
+      <div class="row">
+        <div class="term">Tokens</div>
+        <div class="def"><strong>The units the model reads and writes.</strong> Roughly ¾ of a word in English. The string <code class="inline">"hello world"</code> is two tokens; <code class="inline">"antidisestablishmentarianism"</code> may be six. Pricing, speed, and limits are all in tokens.</div>
+      </div>
+      <div class="row">
+        <div class="term">Architecture</div>
+        <div class="def"><strong>Decoder-only transformers, with variants that matter.</strong> Dense vs <strong>MoE</strong> (only a slice of params activate per token). Attention flavors — GQA, MLA. Positional encoding — RoPE, YaRN. The names show up on every model card.</div>
+      </div>
+      <div class="row">
+        <div class="term">MTP</div>
+        <div class="def"><strong>Multi-Token Prediction.</strong> Instead of training to predict only the next token, the model predicts <em>several future tokens</em> via auxiliary heads. Pioneered at scale by DeepSeek-V3 in late 2024, now the default across the 2026 wave — Qwen3-Next, GLM-5, MiMo, LongCat, and Gemma 4 all ship MTP drafters; llama.cpp added beta MTP support this spring. Two payoffs: denser training signal (better quality per FLOP) and <em>free self-speculative decoding</em> at inference — the MTP heads draft ahead, the main model verifies, yielding 2–3.6× generation speedups with no quality loss. If a 2026 release mentions MTP, this is what they mean.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 04 - QUANTIZATION -->
+  <section class="slide" data-section="Quantization">
+    <div class="eyebrow">The trick that makes it all possible — 04</div>
+    <h2 class="section">Quantization, or: how to fit a <em>70B model</em> on a gaming GPU.</h2>
+    <div class="split">
+      <div>
+        <p class="lede">Models train in 16-bit floats. At inference, you can compress weights to 8, 5, 4, or even 2 bits with minimal quality loss. This is the single biggest unlock for local AI.</p>
+        <table class="compare">
+          <thead><tr><th>Precision</th><th>Bits</th><th>Quality</th><th>Size (7B)</th></tr></thead>
+          <tbody>
+            <tr><td>FP16</td><td>16</td><td>Reference</td><td>~14 GB</td></tr>
+            <tr><td>Q8_0</td><td>8</td><td>~Identical</td><td>~7.5 GB</td></tr>
+            <tr><td>Q5_K_M</td><td>5.5</td><td>Excellent</td><td>~5.0 GB</td></tr>
+            <tr><td>Q4_K_M</td><td>4.5</td><td>Sweet spot</td><td>~4.1 GB</td></tr>
+            <tr><td>Q2_K</td><td>2.5</td><td>Degraded</td><td>~2.7 GB</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 style="font-family:var(--serif);font-weight:600;font-size:20px;margin-bottom:14px;">Formats to know</h3>
+        <ul class="bullet-list">
+          <li><strong>GGUF</strong> — llama.cpp's native format. CPU-friendly, runs anywhere. The default for hobbyists.</li>
+          <li><strong>GPTQ</strong> — GPU-optimized quantization. Fast, popular on text-generation-webui.</li>
+          <li><strong>AWQ</strong> — Activation-aware weight quantization. Preserves quality at low bits.</li>
+          <li><strong>EXL2 / EXL3</strong> — ExLlama's mixed-precision format. Excellent for NVIDIA.</li>
+          <li><strong>MLX</strong> — Apple Silicon's native format via the MLX framework.</li>
+        </ul>
+        <div class="tags" style="margin-top:18px;">
+          <span class="tag red">Rule of thumb</span>
+          <span class="tag">Q4_K_M for most cases</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 05 - MODEL FAMILIES -->
+  <section class="slide" data-section="Models">
+    <div class="eyebrow">The landscape — 05</div>
+    <h2 class="section">The open-weight <em>families.</em></h2>
+    <p class="lede">A handful of labs ship the models worth knowing. Each family has a personality, a license, and a release cadence.</p>
+    <div class="cols-3">
+      <div class="card"><span class="accent-bar"></span><span class="num">Alibaba · Qwen 3.6</span><h3>Qwen</h3><p>Dense (0.6B → 32B) and MoE (Qwen3-Next, 235B-A22B, 3.6 Max). Hybrid thinking mode, MTP drafters. Apache-2.0. Atop most open leaderboards through Q2 2026.</p></div>
+      <div class="card"><span class="accent-bar"></span><span class="num">Moonshot · Kimi K2.6</span><h3>Kimi</h3><p>1T-parameter MoE with 32B active, Modified MIT license. April 2026 release ties GPT-5.5 on SWE-Bench Pro. Long-horizon coding agent — runs ~13 hr unattended.</p></div>
+      <div class="card"><span class="accent-bar"></span><span class="num">DeepSeek · V4 / R2</span><h3>DeepSeek</h3><p>V3.2 Exp, V4 Pro &amp; V4 Flash, R2 reasoning. MTP pioneer at scale. Pushed MATH-500 past 94. The lab that keeps rewriting the training-cost frontier.</p></div>
+      <div class="card"><span class="accent-bar"></span><span class="num">Z.ai · GLM-5.1</span><h3>GLM</h3><p>1T-32B MoE, currently #1 on the 2026 open leaderboard. Strong agentic + tool use. Zhipu's family has quietly become the model to beat.</p></div>
+      <div class="card"><span class="accent-bar"></span><span class="num">Meta · Llama 4</span><h3>Llama</h3><p>Scout (109B/17B, 10M ctx), Maverick (400B/17B, 1M ctx), Behemoth. Native multimodal MoEs. Still the West's flagship open family; license has caveats.</p></div>
+      <div class="card"><span class="accent-bar"></span><span class="num">Google · Gemma 4</span><h3>Gemma</h3><p>April 2026: E2B, E4B (edge, 128K ctx), 26B MoE, 31B Dense (256K ctx). Vision-native, Apache-2.0, ships with MTP speculative drafters from Google.</p></div>
+      <div class="card dark"><span class="accent-bar"></span><span class="num">Mistral</span><h3>Mistral · Codestral</h3><p>Medium 3.5, Small 3 (24B), Codestral, Pixtral (vision), Ministral edge models. Apache-2.0 on most — the cleanest license story in the industry.</p></div>
+      <div class="card dark"><span class="accent-bar"></span><span class="num">Microsoft · Phi-4</span><h3>Phi</h3><p>Phi-4 (14B), Phi-4-reasoning, Phi-4-mini-instruct (3.8B, 128K, CPU-runnable), Phi-4-multimodal. Synthetic-data philosophy: textbook-quality corpora.</p></div>
+      <div class="card red"><span class="accent-bar"></span><span class="num">MiniMax · LG · IBM</span><h3>The rest</h3><p>MiniMax M2.7, LG EXAONE 4.5 (33B VLM), IBM Granite Vision 4.1 (enterprise OCR). Worth tracking but rarely the first model you pull.</p></div>
+    </div>
+    <p class="body" style="margin-top:20px;opacity:0.7;font-size:13px;font-family:var(--mono);">Also in the mix: Nemotron (NVIDIA), OLMo 2 (AI2 — fully open data + code), SmolLM 2 (HF), Hermes 4 (Nous), Command R+ (Cohere), Granite 4 (IBM), Yi (01.AI). Chinese labs hold most leaderboard top-spots through mid-2026. Verify the trending tab on huggingface.co — releases land weekly.</p>
+  </section>
+
+  <!-- SLIDE 06 - MODEL TYPES -->
+  <section class="slide" data-section="Types">
+    <div class="eyebrow">Choose your fighter — 06</div>
+    <h2 class="section">Model <em>types</em> and their merits.</h2>
+    <p class="lede">"7B model" tells you almost nothing. <em>What kind</em> of 7B determines whether it fits your job. The taxonomy that matters.</p>
+    <div class="cols-3">
+      <div class="card"><span class="accent-bar"></span><span class="num">Base</span><h3>Pretrained, raw</h3><p>Pure next-token predictor. Completes patterns, doesn't follow instructions. The starting point for fine-tuning. No "Instruct" or "Chat" suffix on the name.</p></div>
+      <div class="card"><span class="accent-bar"></span><span class="num">Instruct · Chat</span><h3>The default</h3><p>Post-trained with SFT then RLHF / DPO to follow instructions and converse. What 99% of users actually want. "Instruct," "Chat," or "IT" in the name.</p></div>
+      <div class="card"><span class="accent-bar"></span><span class="num">Reasoning</span><h3>Think first, answer second</h3><p>Emits long chains of thought before answering. Strong at math, code, logic. Slower &amp; token-hungry. DeepSeek-R2, Qwen3 thinking mode, Phi-4-reasoning, GLM-5 Think.</p></div>
+      <div class="card dark"><span class="accent-bar"></span><span class="num">Coder · Agentic</span><h3>Built for code</h3><p>Continued pretraining on code, fill-in-the-middle, long-horizon agentic loops. Kimi K2.6, Qwen3-Coder, DeepSeek-Coder V2, Codestral, StarCoder2.</p></div>
+      <div class="card dark"><span class="accent-bar"></span><span class="num">Vision · VLM</span><h3>Multimodal input</h3><p>Accepts images alongside text. Llama 4, Qwen3-VL, Gemma 4, Pixtral, InternVL, EXAONE 4.5, Granite Vision 4.1. OCR, screenshots, charts, document Q&amp;A.</p></div>
+      <div class="card red"><span class="accent-bar"></span><span class="num">MoE</span><h3>Mixture of Experts</h3><p>Total parameters massive, only a fraction <em>active</em> per token. Kimi K2.6 (1T/32B), GLM-5 (1T/32B), DeepSeek-V4, Llama 4, Qwen3-Next, Gemma 4 26B-MoE. High quality per active-param — but the full model still has to fit in memory.</p></div>
+    </div>
+    <p class="body" style="margin-top:20px;opacity:0.7;font-size:13px;font-family:var(--mono);">Adjacent specialists: <strong>Embedding</strong> (retrieval), <strong>Rerankers</strong> (cross-encoders), <strong>Draft</strong> models (tiny pairs for speculative decoding), <strong>Distilled</strong> (small students of bigger teachers — R1-Distill-Qwen-7B, etc.).</p>
+  </section>
+
+  <!-- SLIDE 07 - RUNTIMES -->
+  <section class="slide" data-section="Runtimes">
+    <div class="eyebrow">What actually runs the model — 07</div>
+    <h2 class="section">Runtimes: <em>llama.cpp</em> and its friends.</h2>
+    <p class="lede">A runtime loads weights and turns prompts into tokens. Pick one based on your interface preference and use case.</p>
+    <table class="compare">
+      <thead><tr><th>Runtime</th><th>Best for</th><th>Interface</th><th>Notable</th></tr></thead>
+      <tbody>
+        <tr><td>llama.cpp</td><td>Maximum compatibility, CPU + GPU</td><td>CLI / C++ library</td><td>The engine under nearly everything else. GGUF native. Beta MTP / speculative decoding as of spring 2026.</td></tr>
+        <tr><td>Ollama</td><td>Beginners, fast setup</td><td>CLI + REST API</td><td>One-liner installs. <code class="inline">ollama run qwen3</code> · <code class="inline">ollama run gemma4</code>.</td></tr>
+        <tr><td>LM Studio</td><td>GUI users, model discovery</td><td>Desktop app</td><td>Built-in chat, model browser, OpenAI-compatible server.</td></tr>
+        <tr><td>vLLM</td><td>Production serving, throughput</td><td>Python server</td><td>PagedAttention, continuous batching. Datacenter-grade.</td></tr>
+        <tr><td>ExLlamaV2</td><td>Single-GPU NVIDIA speed</td><td>Python library</td><td>Best raw inference speed for EXL2 quants.</td></tr>
+        <tr><td>MLX / MLX-LM</td><td>Apple Silicon native</td><td>Python framework</td><td>Uses unified memory directly. Built by Apple.</td></tr>
+        <tr><td>ONNX Runtime</td><td>Edge, mobile, Windows GPUs</td><td>Cross-platform library</td><td>Microsoft's portable inference engine. Phi ships ONNX-native. DirectML on Windows, CoreML on iOS, NPU acceleration on Snapdragon X.</td></tr>
+        <tr><td>text-generation-webui</td><td>Power-user tinkering</td><td>Web UI</td><td>Every backend, every sampler, every knob.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SLIDE 08 - HARDWARE / VRAM -->
+  <section class="slide" data-section="Hardware">
+    <div class="eyebrow">The bottleneck — 08</div>
+    <h2 class="section">It's <em>VRAM</em>, almost always.</h2>
+    <p class="lede">More than CPU, more than RAM, more than disk: video memory determines what you can run. Compute speed determines how fast. Below — what you'd actually pay to access each tier.</p>
+    <div class="split">
+      <div>
+        <h3 style="font-family:var(--serif);font-weight:600;font-size:20px;margin-bottom:14px;">GPU tiers — buy vs rent</h3>
+        <table class="compare">
+          <thead><tr><th>GPU</th><th>VRAM</th><th>Buy</th><th>Rent / hr</th><th>Runs (Q4)</th></tr></thead>
+          <tbody>
+            <tr><td>RTX 3060</td><td>12 GB</td><td>~$260 used</td><td>~$0.15</td><td>7B comfortably</td></tr>
+            <tr><td>RTX 3090</td><td>24 GB</td><td>~$750 used</td><td>~$0.22</td><td>13B; 30B tight</td></tr>
+            <tr><td>RTX 4090</td><td>24 GB</td><td>~$1,900 used</td><td>~$0.45</td><td>13B–30B</td></tr>
+            <tr><td>RTX 5090</td><td>32 GB</td><td>$3,000–4,000 †</td><td>~$0.90</td><td>30B comfortable</td></tr>
+            <tr><td>A100</td><td>80 GB</td><td>~$10,000</td><td>~$1.30</td><td>70B at Q8</td></tr>
+            <tr><td>H100</td><td>80 GB</td><td>~$22,000 ‡</td><td>~$1.80</td><td>70B; 2× for 405B</td></tr>
+            <tr><td>H200</td><td>141 GB</td><td>~$39,000</td><td>~$3.60</td><td>405B at Q4 solo</td></tr>
+            <tr><td>B200 (Blackwell)</td><td>192 GB</td><td>$30k–50k</td><td>~$5.00</td><td>1T MoE at Q4</td></tr>
+            <tr><td>M3 Ultra Mac Studio</td><td>up to 512 GB *</td><td>~$9,500+</td><td>n/a</td><td>Anything that fits</td></tr>
+          </tbody>
+        </table>
+        <p class="body" style="margin-top:10px;font-size:12px;opacity:0.7;font-family:var(--mono);">Prices &amp; rentals approximate, USD, May 2026. Spot rates on RunPod / Vast.ai / Lambda vary 2–3× by demand. † 5090 MSRP $1,999 but supply-constrained — street ~$3k+. ‡ H100 falling fast as B200 ramps. * Unified memory shared across CPU and GPU; M5 Ultra Mac Studio expected H2 2026.</p>
+      </div>
+      <div>
+        <h3 style="font-family:var(--serif);font-weight:600;font-size:20px;margin-bottom:14px;">Backends</h3>
+        <ul class="bullet-list">
+          <li><strong>CUDA</strong> — NVIDIA only. The mature path. Best ecosystem support.</li>
+          <li><strong>Metal</strong> — Apple Silicon. Native, fast, low setup.</li>
+          <li><strong>ROCm</strong> — AMD. Improving rapidly. Linux primarily.</li>
+          <li><strong>Vulkan</strong> — Cross-platform fallback. Intel Arc and older GPUs.</li>
+          <li><strong>DirectML</strong> — Windows abstraction over any DX12 GPU.</li>
+          <li><strong>CPU</strong> — Always works. Usable for 7B Q4 with AVX-512.</li>
+        </ul>
+        <div class="card red" style="margin-top:18px;">
+          <span class="accent-bar"></span>
+          <h3 style="font-family:var(--serif);">The Apple advantage</h3>
+          <p>Unified memory means CPU and GPU share one pool. A 512 GB M3 Ultra runs a Q4 405B model — slower than an H100, but a single box at ~⅓ the price and silent on your desk.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 08 - PERFORMANCE -->
+  <section class="slide" data-section="Performance">
+    <div class="eyebrow">Measuring speed — 09</div>
+    <h2 class="section">Performance: the <em>three numbers</em> that matter.</h2>
+    <div class="stat-row">
+      <div class="stat"><div class="n">t/s</div><div class="l">Tokens per second</div></div>
+      <div class="stat"><div class="n">TTFT</div><div class="l">Time to first token</div></div>
+      <div class="stat"><div class="n">KV</div><div class="l">Key-value cache size</div></div>
+    </div>
+    <div class="cols-2" style="margin-top:32px;">
+      <div>
+        <ul class="bullet-list">
+          <li><strong>Tokens/sec</strong> — generation throughput once decoding starts. A 7B Q4 on an M2 Pro hits ~40 t/s. A 70B on an RTX 4090 hits ~15 t/s. Reading speed is ~10 t/s, so anything above that feels real-time.</li>
+          <li><strong>Time-to-first-token (TTFT)</strong> — how long the model takes to process your prompt before generating. Scales with prompt length. A 50K-token document might take seconds to ingest.</li>
+          <li><strong>KV cache</strong> — every previous token's attention state, kept in VRAM. Grows linearly with context. Doubling context can mean doubling memory pressure.</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-family:var(--serif);font-weight:600;font-size:20px;margin-bottom:14px;">Levers you can pull</h3>
+        <ul class="bullet-list">
+          <li><strong>GPU layer offload</strong> — push as many layers to VRAM as fit; CPU handles the rest.</li>
+          <li><strong>Batch size</strong> — bigger batches = better throughput for multiple parallel requests.</li>
+          <li><strong>Flash Attention</strong> — fused attention kernel. Free speed when supported.</li>
+          <li><strong>Speculative decoding</strong> — a tiny draft model proposes tokens, the big one verifies. 2–3× speedups.</li>
+          <li><strong>Context length</strong> — only allocate what you need. Halving max context can free gigabytes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 09 - PROMPT TEMPLATES -->
+  <section class="slide" data-section="Templates">
+    <div class="eyebrow">The invisible interface — 10</div>
+    <h2 class="section">Chat templates: every model has its <em>own format.</em></h2>
+    <p class="lede">Behind every "chat" is a precise string format the model was trained on. Get it wrong and quality collapses silently.</p>
+    <div class="cols-2">
+      <div>
+        <span class="flag">Llama 3</span>
+<pre class="code"><span class="c-cm">// Llama 3 chat template</span>
+<span class="c-tok">&lt;|begin_of_text|&gt;</span><span class="c-tok">&lt;|start_header_id|&gt;</span>system<span class="c-tok">&lt;|end_header_id|&gt;</span>
+
+You are a helpful assistant.<span class="c-tok">&lt;|eot_id|&gt;</span>
+<span class="c-tok">&lt;|start_header_id|&gt;</span>user<span class="c-tok">&lt;|end_header_id|&gt;</span>
+
+What is quantization?<span class="c-tok">&lt;|eot_id|&gt;</span>
+<span class="c-tok">&lt;|start_header_id|&gt;</span>assistant<span class="c-tok">&lt;|end_header_id|&gt;</span></pre>
+      </div>
+      <div>
+        <span class="flag">ChatML</span>
+<pre class="code"><span class="c-cm">// ChatML — used by Qwen, OpenAI-style</span>
+<span class="c-tok">&lt;|im_start|&gt;</span>system
+You are a helpful assistant.<span class="c-tok">&lt;|im_end|&gt;</span>
+<span class="c-tok">&lt;|im_start|&gt;</span>user
+What is quantization?<span class="c-tok">&lt;|im_end|&gt;</span>
+<span class="c-tok">&lt;|im_start|&gt;</span>assistant</pre>
+      </div>
+    </div>
+    <ul class="bullet-list" style="margin-top:18px;">
+      <li>Modern runtimes apply templates automatically via the tokenizer's <code>chat_template</code> field — but you should know it's happening.</li>
+      <li>System prompts go in the <code>system</code> turn. Tool calls and reasoning sometimes get their own special tokens.</li>
+      <li>Mismatched templates are the #1 cause of "this model is dumb" reports. Always verify the format.</li>
+    </ul>
+    <h3 style="font-family:var(--mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--stanford-red);margin-top:24px;">Where the template fits</h3>
+    <div class="pipeline">
+      <div class="step"><div class="step-n">01</div><h4>HTTP request</h4><p>POST <code class="inline">/v1/chat/completions</code> with JSON <code class="inline">messages: [...]</code>.</p></div>
+      <div class="step"><div class="step-n">02</div><h4>Parse roles</h4><p>Server reads each turn: <code class="inline">system</code>, <code class="inline">user</code>, <code class="inline">assistant</code>.</p></div>
+      <div class="step"><div class="step-n">03</div><h4>Apply template</h4><p>Tokenizer's <code class="inline">chat_template</code> wraps each turn with the model's special tokens.</p></div>
+      <div class="step"><div class="step-n">04</div><h4>Tokenize</h4><p>Resulting string becomes token IDs — integers the model actually reads.</p></div>
+      <div class="step"><div class="step-n">05</div><h4>Model runs</h4><p>Forward pass, sampling, tokens stream back as text to the client.</p></div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10 - FINETUNE VS RAG -->
+  <section class="slide" data-section="Customization">
+    <div class="eyebrow">Two ways to teach a model — 11</div>
+    <h2 class="section">Fine-tuning <em>vs.</em> RAG.</h2>
+    <p class="lede">When the base model doesn't know your stuff, you have two paths. They solve different problems and are often used together.</p>
+    <table class="compare">
+      <thead><tr><th>Dimension</th><th>Fine-tuning</th><th>RAG</th></tr></thead>
+      <tbody>
+        <tr><td>Changes</td><td>Model weights</td><td>Model input (prompt)</td></tr>
+        <tr><td>Best for</td><td>Style, format, behavior</td><td>Facts, documents, current data</td></tr>
+        <tr><td>Update cost</td><td>Hours of GPU time per update</td><td>Re-embed changed documents</td></tr>
+        <tr><td>Hallucinations</td><td>Can still invent</td><td>Grounded in retrieved text</td></tr>
+        <tr><td>Citations</td><td>Difficult</td><td>Built-in (you have the source)</td></tr>
+        <tr><td>Tooling</td><td>Unsloth, Axolotl, TRL, LLaMA-Factory</td><td>LangChain, LlamaIndex, Haystack</td></tr>
+        <tr><td>Use when</td><td>You need a specific tone or skill</td><td>You need the model to know things</td></tr>
+      </tbody>
+    </table>
+    <p class="body" style="margin-top:18px;font-style:italic;opacity:0.85;">Rule: try RAG first. It's cheaper, more flexible, and easier to debug. Fine-tune only when prompting and retrieval have hit their limits.</p>
+  </section>
+
+  <!-- SLIDE 11 - LoRA -->
+  <section class="slide" data-section="LoRA">
+    <div class="eyebrow">The democratized fine-tune — 12</div>
+    <h2 class="section">LoRA &amp; QLoRA: train a <em>70B model</em> on one GPU.</h2>
+    <div class="split">
+      <div>
+        <p class="lede">Full fine-tuning of a large model requires hundreds of gigabytes of VRAM. LoRA — Low-Rank Adaptation — sidesteps it entirely.</p>
+        <ul class="bullet-list">
+          <li><strong>Freeze the base model.</strong> Original weights stay untouched.</li>
+          <li><strong>Inject small trainable matrices.</strong> Two low-rank matrices (rank 8, 16, 32) per layer that <em>add</em> to the original weights.</li>
+          <li><strong>Train only those.</strong> Maybe 0.1% of the parameters. Fits on a single consumer GPU.</li>
+          <li><strong>Ship the adapter.</strong> A LoRA file is megabytes, not gigabytes — load on top of any base.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="card red">
+          <span class="accent-bar"></span>
+          <span class="num">QLoRA</span>
+          <h3 style="font-family:var(--serif);">The one-GPU trick.</h3>
+          <p style="margin-top:8px;">Load the base model in 4-bit, attach a LoRA in 16-bit, train. A 70B fine-tune drops from "8× A100" to "single 24GB GPU." Released 2023, still the default approach.</p>
+        </div>
+        <h3 style="font-family:var(--serif);font-weight:600;font-size:18px;margin-top:24px;margin-bottom:10px;">Tooling</h3>
+        <div class="tags">
+          <span class="tag dark">Unsloth</span>
+          <span class="tag dark">Axolotl</span>
+          <span class="tag dark">TRL</span>
+          <span class="tag dark">LLaMA-Factory</span>
+          <span class="tag dark">PEFT</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 12 - EMBEDDINGS -->
+  <section class="slide" data-section="Retrieval">
+    <div class="eyebrow">Meaning, as numbers — 13</div>
+    <h2 class="section">Embeddings: turning <em>language</em> into geometry.</h2>
+    <p class="lede">An embedding model converts a chunk of text into a high-dimensional vector. Similar meanings land near each other in space. This is what powers semantic search.</p>
+    <div class="cols-2">
+      <div>
+        <h3 style="font-family:var(--serif);font-weight:600;font-size:20px;margin-bottom:14px;">Embedding models</h3>
+        <ul class="bullet-list">
+          <li><strong>BGE</strong> — BAAI General Embedding. Strong, open, multilingual.</li>
+          <li><strong>nomic-embed</strong> — Open weights, long context, popular default.</li>
+          <li><strong>E5 / mE5</strong> — Microsoft's family. Very competitive.</li>
+          <li><strong>Jina embeddings</strong> — Long-context (8K+) variants.</li>
+          <li><strong>GTE</strong> — Alibaba's general text embeddings.</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-family:var(--serif);font-weight:600;font-size:20px;margin-bottom:14px;">Vector databases</h3>
+        <ul class="bullet-list">
+          <li><strong>FAISS</strong> — Facebook's library. In-memory, blazing fast, library not a server.</li>
+          <li><strong>Chroma</strong> — Easy local dev. SQLite-style for vectors.</li>
+          <li><strong>Qdrant</strong> — Production-grade Rust server. Excellent filtering.</li>
+          <li><strong>LanceDB</strong> — Embedded, file-based, modern format.</li>
+          <li><strong>Weaviate · Milvus · pgvector</strong> — Heavier, distributed options.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="body" style="margin-top:18px;font-size:13px;font-family:var(--mono);opacity:0.7;">Similarity = cosine distance between vectors. Closer vectors → more semantically related text.</p>
+  </section>
+
+  <!-- SLIDE 13 - RAG PIPELINE -->
+  <section class="slide" data-section="RAG">
+    <div class="eyebrow">Putting it together — 14</div>
+    <h2 class="section">The <em>RAG pipeline</em>, end to end.</h2>
+    <p class="lede">Retrieval-Augmented Generation. Fetch relevant context, paste it into the prompt, let the model answer with sources.</p>
+    <h3 style="font-family:var(--mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--stanford-red);margin-top:8px;">Indexing — done once</h3>
+    <div class="pipeline">
+      <div class="step"><div class="step-n">01</div><h4>Load</h4><p>PDFs, HTML, code, transcripts. Extract clean text.</p></div>
+      <div class="step"><div class="step-n">02</div><h4>Chunk</h4><p>Split into 256–1024 token windows with overlap.</p></div>
+      <div class="step"><div class="step-n">03</div><h4>Embed</h4><p>Run each chunk through the embedding model.</p></div>
+      <div class="step"><div class="step-n">04</div><h4>Store</h4><p>Vectors + chunks + metadata in the vector DB.</p></div>
+    </div>
+    <h3 style="font-family:var(--mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--stanford-red);margin-top:20px;">Querying — every request</h3>
+    <div class="pipeline">
+      <div class="step"><div class="step-n">05</div><h4>Embed query</h4><p>Same embedding model as indexing.</p></div>
+      <div class="step"><div class="step-n">06</div><h4>Retrieve</h4><p>Top-k nearest chunks by cosine similarity.</p></div>
+      <div class="step"><div class="step-n">07</div><h4>Rerank</h4><p>Optional: cross-encoder reorders for relevance.</p></div>
+      <div class="step"><div class="step-n">08</div><h4>Generate</h4><p>Stuff into prompt, model answers with citations.</p></div>
+    </div>
+    <p class="body" style="margin-top:18px;font-size:13px;opacity:0.7;">Advanced patterns: hybrid search (BM25 + vectors), HyDE (hypothetical answer embedding), agentic retrieval (model decides what to search for).</p>
+  </section>
+
+  <!-- SLIDE 14 - STRUCTURED OUTPUT -->
+  <section class="slide" data-section="Tools">
+    <div class="eyebrow">Beyond chat — 15</div>
+    <h2 class="section">Structured output &amp; <em>function calling.</em></h2>
+    <p class="lede">Free-form text is the demo. Production systems need parseable output and the ability to call code. Local runtimes support both — better than most people realize.</p>
+    <div class="cols-2">
+      <div>
+        <h3 style="font-family:var(--serif);font-weight:600;font-size:20px;margin-bottom:14px;">Structured output</h3>
+        <ul class="bullet-list">
+          <li><strong>JSON mode</strong> — runtime forces valid JSON. Available in llama.cpp, Ollama, vLLM.</li>
+          <li><strong>GBNF grammars</strong> — llama.cpp's grammar-constrained sampling. Define exactly what tokens are legal.</li>
+          <li><strong>Outlines / LMQL</strong> — Python libraries that compile regex and Pydantic schemas into grammars.</li>
+          <li><strong>XGrammar</strong> — modern, fast grammar engine used by vLLM.</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-family:var(--serif);font-weight:600;font-size:20px;margin-bottom:14px;">Function / tool calling</h3>
+        <ul class="bullet-list">
+          <li>Model emits a structured request to call a named function with arguments.</li>
+          <li>Your code runs the function, returns the result, model continues.</li>
+          <li>Most modern open models are tool-call trained: Llama 3.1+, Qwen 2.5+, Mistral, Hermes.</li>
+          <li>This loop, repeated, is what people mean by an <em>agent</em>.</li>
+        </ul>
+      </div>
+    </div>
+<pre class="code" style="margin-top:18px;"><span class="c-cm">// Typical tool call emitted by a local model</span>
+{
+  <span class="c-key">"name"</span>: <span class="c-str">"search_web"</span>,
+  <span class="c-key">"arguments"</span>: { <span class="c-key">"query"</span>: <span class="c-str">"stanford red hex code"</span> }
+}</pre>
+  </section>
+
+  <!-- SLIDE 15 - MCP -->
+  <section class="slide" data-section="MCP">
+    <div class="eyebrow">The new connective tissue — 16</div>
+    <h2 class="section">MCP: the <em>USB-C</em> for AI tools.</h2>
+    <div class="split">
+      <div>
+        <p class="lede">The Model Context Protocol is an open standard for connecting models to tools, data sources, and prompts. One protocol, many servers, any client.</p>
+        <ul class="bullet-list">
+          <li><strong>Servers</strong> expose tools, resources, and prompts. Anyone can write one.</li>
+          <li><strong>Clients</strong> (Claude Desktop, IDEs, agents) connect to servers and route the model's tool calls.</li>
+          <li><strong>Transport</strong> is stdio or HTTP. Servers can run locally or remotely.</li>
+          <li>Replaces a tangle of bespoke integrations with a single shared contract.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="card dark">
+          <span class="accent-bar"></span>
+          <span class="num">Why it matters</span>
+          <h3 style="font-family:var(--serif);">Tools, decoupled.</h3>
+          <p style="margin-top:8px;">Before MCP, every assistant invented its own plugin format. Now your filesystem server, your GitHub server, your Postgres server work the same way in any MCP-aware client — including local-LLM frontends.</p>
+        </div>
+        <div class="tags" style="margin-top:18px;">
+          <span class="tag red">Open standard</span>
+          <span class="tag">Stdio / HTTP</span>
+          <span class="tag">JSON-RPC</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 16 - QUICK START -->
+  <section class="slide" data-section="Stack">
+    <div class="eyebrow">A pragmatic starting point — 17</div>
+    <h2 class="section">A recommended <em>first stack.</em></h2>
+    <p class="lede">If you remember nothing else, this is the path of least resistance from zero to running.</p>
+    <div class="defs">
+      <div class="row"><div class="term">Runtime</div><div class="def"><strong>Ollama</strong> for ease, <strong>LM Studio</strong> if you want a GUI, <strong>llama.cpp</strong> directly if you're a developer. All speak the OpenAI API format.</div></div>
+      <div class="row"><div class="term">First model</div><div class="def"><strong>Qwen3 8B</strong> or <strong>Gemma 4 E4B</strong> at Q4 — broadly capable, runs on most hardware. <strong>Phi-4-mini-instruct</strong> if you're CPU-only on a laptop. Enable Qwen3's thinking mode (or pull <strong>DeepSeek-R2-Distill-Qwen-7B</strong>) when you want reasoning.</div></div>
+      <div class="row"><div class="term">Coding model</div><div class="def"><strong>Qwen3-Coder</strong> or <strong>DeepSeek-Coder-V2-Lite</strong> for local; <strong>Kimi K2.6</strong> if you have the VRAM and want a long-horizon agent. Use through Continue.dev, Aider, Zed, or Cursor's local-model mode.</div></div>
+      <div class="row"><div class="term">Embedding model</div><div class="def"><strong>nomic-embed-text</strong> or <strong>BGE-large</strong>. Pull through Ollama for one-line install.</div></div>
+      <div class="row"><div class="term">Vector store</div><div class="def"><strong>Chroma</strong> for prototypes, <strong>Qdrant</strong> when it gets real. <strong>LanceDB</strong> if you want embedded.</div></div>
+      <div class="row"><div class="term">RAG framework</div><div class="def"><strong>LlamaIndex</strong> for retrieval focus, <strong>LangChain</strong> for orchestration, or roll your own — it's a few hundred lines.</div></div>
+      <div class="row"><div class="term">Where to browse</div><div class="def"><strong>Hugging Face</strong> for weights, <strong>r/LocalLLaMA</strong> for news, <strong>TheBloke</strong> &amp; <strong>bartowski</strong> for quantized GGUFs.</div></div>
+    </div>
+  </section>
+
+  <!-- SLIDE 17 - GOTCHAS -->
+  <section class="slide" data-section="Pitfalls">
+    <div class="eyebrow">Things that will trip you up — 18</div>
+    <h2 class="section">Mistakes <em>everyone makes</em> first.</h2>
+    <div class="cols-2">
+      <div>
+        <div class="card" style="margin-bottom:14px;"><span class="accent-bar"></span><span class="num">01</span><h3>Running too large a quant</h3><p>You can fit Q8 in VRAM, but generation will be slow. Q4_K_M is usually faster AND nearly as good. Quality vs speed isn't linear.</p></div>
+        <div class="card" style="margin-bottom:14px;"><span class="accent-bar"></span><span class="num">02</span><h3>Ignoring the chat template</h3><p>Manually constructing prompts without the model's expected special tokens. Output quality silently tanks.</p></div>
+        <div class="card"><span class="accent-bar"></span><span class="num">03</span><h3>Default sampler settings</h3><p>Temperature 0.7 is fine for chat, terrible for code. Greedy (temp=0) for deterministic tasks. Learn min_p, top_p, repetition_penalty.</p></div>
+      </div>
+      <div>
+        <div class="card dark" style="margin-bottom:14px;"><span class="accent-bar"></span><span class="num">04</span><h3>Forgetting the KV cache</h3><p>Loading a 7B Q4 model uses 4 GB. Then a 32K context conversation adds another 4 GB. Plan for it.</p></div>
+        <div class="card dark" style="margin-bottom:14px;"><span class="accent-bar"></span><span class="num">05</span><h3>Comparing on vibes</h3><p>Try the same prompts across models. Use lm-eval-harness or your own test set. Benchmarks rarely reflect your workload.</p></div>
+        <div class="card red"><span class="accent-bar"></span><span class="num">06</span><h3>Chasing parameter count</h3><p>A well-tuned 14B often beats a sloppy 70B for real tasks. Stop fetishizing size. Test before committing.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 18 - CLOSING -->
+  <section class="slide" data-section="Closing">
+    <div class="closing">
+      <div class="eyebrow">End of guide — 19</div>
+      <div>
+        <div class="big-mark">¶</div>
+        <h2 class="section" style="margin-top:20px;max-width:18ch;">The fastest way to learn this is to <em>start running things.</em></h2>
+        <p class="lede" style="margin-top:14px;">Install Ollama. Pull a 7B model. Ask it something. Everything in this deck makes more sense once tokens are streaming out of your own machine.</p>
+      </div>
+      <div class="resources">
+        <div class="res"><div class="lab">Weights</div><div class="val">huggingface.co</div><div class="desc">The open-model hub. Every weight, every quant.</div></div>
+        <div class="res"><div class="lab">Community</div><div class="val">r/LocalLLaMA</div><div class="desc">News, benchmarks, drama, working examples.</div></div>
+        <div class="res"><div class="lab">Reference</div><div class="val">llama.cpp · ollama</div><div class="desc">The engines worth reading the source of.</div></div>
+        <div class="res"><div class="lab">Standards</div><div class="val">modelcontextprotocol.io</div><div class="desc">Where tools, agents, and models converge.</div></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="nav">
+  <button class="nav-btn" id="prev-btn">← Previous</button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-btn" id="next-btn">Next →</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+const dotsContainer = document.getElementById('dots');
+const slideNum = document.getElementById('slide-num');
+const slideTotal = document.getElementById('slide-total');
+const sectionLabel = document.getElementById('section-label');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+
+let current = 0;
+slideTotal.textContent = String(total).padStart(2, '0');
+
+// build dots
+for (let i = 0; i < total; i++) {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.addEventListener('click', () => goTo(i));
+  dotsContainer.appendChild(d);
+}
+const dots = document.querySelectorAll('.dot');
+
+function goTo(i) {
+  if (i < 0 || i >= total || i === current) return;
+  const dir = i > current ? 'forward' : 'back';
+  slides[current].classList.remove('active');
+  if (dir === 'back') slides[current].classList.add('prev');
+  slides[i].classList.remove('prev');
+  // force reflow for transition
+  void slides[i].offsetWidth;
+  slides[i].classList.add('active');
+  dots[current].classList.remove('active');
+  dots[i].classList.add('active');
+  current = i;
+  slideNum.textContent = String(i + 1).padStart(2, '0');
+  sectionLabel.textContent = slides[i].dataset.section.toUpperCase();
+  prevBtn.disabled = i === 0;
+  nextBtn.disabled = i === total - 1;
+  // cleanup prev classes from non-active slides
+  setTimeout(() => {
+    slides.forEach((s, idx) => {
+      if (idx !== current) s.classList.remove('prev');
+    });
+  }, 420);
+}
+
+prevBtn.addEventListener('click', () => goTo(current - 1));
+nextBtn.addEventListener('click', () => goTo(current + 1));
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+    e.preventDefault();
+    goTo(current + 1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+    e.preventDefault();
+    goTo(current - 1);
+  } else if (e.key === 'Home') {
+    goTo(0);
+  } else if (e.key === 'End') {
+    goTo(total - 1);
+  }
+});
+
+prevBtn.disabled = true;
+</script>
+
+</body>
+</html>
