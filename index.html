@@ -213,6 +213,45 @@ body:has(.slide[data-section="Cover"].active) .stage {
   object-fit: contain;
   object-position: center center;
 }
+.cover-start {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(28px, 5vh, 56px);
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 148px;
+  min-height: 46px;
+  padding: 0 22px;
+  background: var(--stanford-red);
+  border: 1px solid var(--stanford-red-deep);
+  color: var(--cream);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-decoration: none;
+  text-transform: uppercase;
+  box-shadow: 0 10px 24px rgba(61,38,29,0.18);
+  animation: cover-start-breathe 2.8s ease-in-out infinite;
+  will-change: transform, box-shadow;
+  z-index: 2;
+}
+.cover-start:active {
+  animation: none;
+  transform: translateX(-50%) translateY(1px);
+}
+@keyframes cover-start-breathe {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    box-shadow: 0 10px 24px rgba(61,38,29,0.18);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.045);
+    box-shadow: 0 14px 34px rgba(61,38,29,0.28);
+  }
+}
 .slide.enter-from-right { transform: translateX(100%); }
 .slide.enter-from-left { transform: translateX(-100%); }
 .slide.is-staging { transition: none; }
@@ -225,6 +264,9 @@ body:has(.slide[data-section="Cover"].active) .stage {
   transform: translateX(100%);
 }
 @media (prefers-reduced-motion: reduce) {
+  .cover-start {
+    animation: none;
+  }
   .slide {
     transition: opacity 180ms ease;
     transform: translateX(0);
@@ -1097,6 +1139,12 @@ body:has(.slide[data-section="Closing"].active) .puppy-mascot { display: none; }
   .cover-left h1 { font-size: clamp(36px, 10vw, 56px); }
   .cover-left .cover-sub { font-size: clamp(14px, 3.5vw, 18px); }
   .cover-left .byline { flex-wrap: wrap; gap: 14px; font-size: 10px; }
+  .cover-start {
+    bottom: max(24px, env(safe-area-inset-bottom));
+    min-width: 132px;
+    min-height: 44px;
+    padding: 0 20px;
+  }
 
   /* Cards */
   .card { padding: 16px 16px; }
@@ -1266,6 +1314,7 @@ body:has(.slide[data-section="Closing"].active) .puppy-mascot { display: none; }
       alt="Local AI field guide cover"
       fetchpriority="high"
       decoding="async">
+    <a class="cover-start" href="#02-why" aria-label="Start the guide">Start</a>
   </section>
 
   <!-- SLIDE 02 - WHY LOCAL -->
@@ -1979,6 +2028,7 @@ const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
 const slideSelect = document.getElementById('slide-select');
 
+const baseTitle = "Local AI Field Guide";
 let current = 0;
 let isApplyingHash = false;
 slideTotal.textContent = String(total).padStart(2, '0');
@@ -2006,6 +2056,12 @@ function updateHash(i, replace = false) {
   } else {
     history.pushState(null, "", url);
   }
+}
+
+function updateDocumentTitle(i) {
+  const slideTitle = slides[i].dataset.section;
+  const slideNumber = String(i + 1).padStart(2, '0');
+  document.title = `${slideNumber} ${slideTitle} — ${baseTitle}`;
 }
 
 // Build dots
@@ -2051,6 +2107,7 @@ function goTo(i) {
   sectionLabel.textContent = slides[i].dataset.section.toUpperCase();
   prevBtn.disabled = i === 0;
   nextBtn.disabled = i === total - 1;
+  updateDocumentTitle(i);
   if (!isApplyingHash) updateHash(i);
   setTimeout(() => {
     slides.forEach((s, idx) => {
@@ -2092,6 +2149,7 @@ function applyInitialSlide() {
   sectionLabel.textContent = slides[initial].dataset.section.toUpperCase();
   prevBtn.disabled = initial === 0;
   nextBtn.disabled = initial === total - 1;
+  updateDocumentTitle(initial);
   updateHash(initial, true);
 }
 
