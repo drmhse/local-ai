@@ -3,33 +3,92 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Local AI — A Field Guide</title>
+<title>Local AI Field Guide — Run Open Models on Your Own Machine</title>
+<meta name="description" content="A practical, visual field guide to local AI: model formats, quantization, runtimes, hardware, chat templates, RAG, agents, and a first stack for running open models locally.">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Local AI Field Guide">
+<meta name="application-name" content="Local AI Field Guide">
+<meta name="theme-color" content="#F4F1EA">
+<meta name="color-scheme" content="light">
+<link rel="canonical" href="/">
+<link rel="preload" as="image" href="assets/cover-1200.jpg" imagesrcset="assets/cover-768.jpg 768w, assets/cover-1200.jpg 1200w, assets/cover-1536.jpg 1536w" imagesizes="100vw" type="image/jpeg" fetchpriority="high">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Local AI Field Guide">
+<meta property="og:title" content="Local AI Field Guide">
+<meta property="og:description" content="A practical field guide to local AI: formats, quantization, runtimes, hardware, RAG, agents, and running open models on your own machine.">
+<meta property="og:url" content="/">
+<meta property="og:image" content="/assets/cover-og.jpg">
+<meta property="og:image:secure_url" content="/assets/cover-og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Cover artwork for Local AI Field Guide">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Local AI Field Guide">
+<meta name="twitter:description" content="A practical field guide to local AI: formats, quantization, runtimes, hardware, RAG, agents, and running open models locally.">
+<meta name="twitter:image" content="/assets/cover-og.jpg">
+<meta name="twitter:image:alt" content="Cover artwork for Local AI Field Guide">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LearningResource",
+  "name": "Local AI Field Guide",
+  "headline": "Local AI Field Guide",
+  "description": "A practical, visual field guide to local AI: model formats, quantization, runtimes, hardware, chat templates, RAG, agents, and a first stack for running open models locally.",
+  "image": "/assets/cover-og.jpg",
+  "inLanguage": "en-US",
+  "learningResourceType": "Slide deck",
+  "about": ["Local AI", "Open-weight models", "Quantization", "RAG", "LLM inference"]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500;8..60,600;8..60,700;8..60,900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --stanford-red: #8C1515;
-  --stanford-red-deep: #5E0B0B;
+  --stanford-red: #6B371F;
+  --stanford-red-deep: #4A2010;
   --black: #000000;
   --white: #FFFFFF;
   --ink: #111111;
   --rule: #E6E6E6;
   --soft: #F6F4F1;
+  --cream: #F4F1EA;
+  --cream-dot: #D3C9B8;
   --serif: 'Source Serif 4', Georgia, serif;
   --mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
+html {
   height: 100%;
-  background: var(--white);
+  background: var(--cream);
+}
+
+body {
+  height: 100%;
+  background-color: var(--cream);
+  background-image: url("bg.svg");
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: 100% auto;
   color: var(--ink);
   font-family: var(--serif);
   font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+}
+body:has(.slide[data-section="Cover"].active) {
+  background-image: none;
+  background-color: #F4F1EA;
+}
+body:has(.slide[data-section="Cover"].active) .nav {
+  display: none;
+}
+body:has(.slide[data-section="Cover"].active) .stage {
+  bottom: 0;
 }
 
 /* ====== TOP RAIL ====== */
@@ -78,11 +137,18 @@ html, body {
 }
 .rail-right span.sep { color: var(--rule); margin: 0 8px; }
 .rail-right .current { color: var(--stanford-red); font-weight: 700; }
+.rail .nav-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+}
 
 /* ====== SLIDE STAGE ====== */
 .stage {
   position: fixed;
-  top: 44px; left: 0; right: 0; bottom: 56px;
+  top: 44px; left: 0; right: 0; bottom: 76px;
   overflow: hidden;
 }
 .deck {
@@ -91,23 +157,75 @@ html, body {
 }
 .slide {
   position: absolute;
-  inset: 0;
-  padding: 56px 80px 40px;
+  inset: 32px 56px 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
+  background: rgba(244,241,234,0.68);
+  border: 1px solid rgba(255,255,255,0.42);
+  box-shadow: 0 18px 42px rgba(61,38,29,0.08);
+  backdrop-filter: blur(12px) saturate(1.08);
+  -webkit-backdrop-filter: blur(12px) saturate(1.08);
   opacity: 0;
-  transform: translateX(40px);
-  transition: opacity 380ms ease, transform 380ms cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(100%);
+  transition:
+    opacity 520ms ease,
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
+  overflow-x: hidden;
   overflow-y: auto;
+  will-change: transform, opacity;
+  isolation: isolate;
 }
 .slide.active {
   opacity: 1;
   transform: translateX(0);
   pointer-events: auto;
 }
-.slide.prev {
-  transform: translateX(-40px);
+.slide[data-section="Cover"] {
+  inset: 0;
+  padding: 0;
+  background:
+    linear-gradient(rgba(107,55,31,0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(107,55,31,0.055) 1px, transparent 1px),
+    #F4F1EA;
+  background-size: 24px 24px;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow: hidden;
+}
+.slide[data-section="Cover"] .cover-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: center center;
+}
+.slide.enter-from-right { transform: translateX(100%); }
+.slide.enter-from-left { transform: translateX(-100%); }
+.slide.is-staging { transition: none; }
+.slide.exit-to-left {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+.slide.exit-to-right {
+  opacity: 0;
+  transform: translateX(100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    transition: opacity 180ms ease;
+    transform: translateX(0);
+  }
+  .slide.enter-from-right,
+  .slide.enter-from-left,
+  .slide.is-staging,
+  .slide.exit-to-left,
+  .slide.exit-to-right {
+    transform: translateX(0);
+  }
 }
 
 /* ====== TYPOGRAPHY ====== */
@@ -276,23 +394,30 @@ p.body, li.body {
   flex: 1;
   align-items: start;
 }
+.cols-2 > *,
+.cols-3 > *,
+.split > * {
+  min-width: 0;
+}
 
 /* ====== CARDS / BLOCKS ====== */
 .card {
-  border: 1px solid var(--rule);
+  border: 1px solid #C8C0B4;
   padding: 22px 24px;
-  background: var(--white);
+  background: transparent;
   position: relative;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .card.dark {
-  background: var(--black);
-  color: var(--white);
-  border-color: var(--black);
+  background: transparent;
+  color: var(--ink);
+  border-color: #C8C0B4;
 }
 .card.red {
-  background: var(--stanford-red);
-  color: var(--white);
-  border-color: var(--stanford-red);
+  background: transparent;
+  color: var(--ink);
+  border-color: #C8C0B4;
 }
 .card .num {
   font-family: var(--mono);
@@ -302,7 +427,7 @@ p.body, li.body {
   margin-bottom: 10px;
   display: block;
 }
-.card.dark .num, .card.red .num { color: var(--white); opacity: 0.8; }
+.card.dark .num, .card.red .num { color: var(--stanford-red); opacity: 1; }
 .card h3 {
   font-family: var(--serif);
   font-weight: 600;
@@ -321,7 +446,23 @@ p.body, li.body {
   width: 4px; height: 28px;
   background: var(--stanford-red);
 }
-.card.dark .accent-bar, .card.red .accent-bar { background: var(--white); }
+.card.dark .accent-bar, .card.red .accent-bar { background: var(--stanford-red); }
+
+/* Solo feature cards inside a split column keep their colored backgrounds */
+.split .card.dark {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+}
+.split .card.red {
+  background: var(--stanford-red);
+  color: var(--white);
+  border-color: var(--stanford-red);
+}
+.split .card.dark .num,
+.split .card.red .num  { color: var(--white); opacity: 0.8; }
+.split .card.dark .accent-bar,
+.split .card.red .accent-bar { background: var(--white); }
 
 /* ====== DEFINITION LIST ====== */
 .defs { margin-top: 8px; }
@@ -355,14 +496,18 @@ pre.code {
   font-family: var(--mono);
   font-size: 13px;
   line-height: 1.6;
+  min-height: calc(3lh + 36px);
   background: var(--black);
   color: var(--white);
   padding: 18px 22px;
   border-left: 4px solid var(--stanford-red);
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   margin: 12px 0;
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
+  white-space: pre;
 }
 pre.code .c-key { color: #ff8a8a; }
 pre.code .c-str { color: #ffd2a8; }
@@ -382,6 +527,7 @@ code.inline {
 /* ====== TABLE ====== */
 table.compare {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   margin-top: 8px;
   font-family: var(--serif);
@@ -427,11 +573,11 @@ table.compare tr:hover td { background: var(--soft); }
 .pipeline .step {
   flex: 1;
   min-width: 140px;
-  background: var(--white);
+  background: transparent;
   border: 1px solid var(--black);
   padding: 18px 16px;
   position: relative;
-  margin-right: 14px;
+  margin-right: 28px;
   margin-bottom: 14px;
 }
 .pipeline .step:last-child { margin-right: 0; }
@@ -458,8 +604,9 @@ table.compare tr:hover td { background: var(--soft); }
 .pipeline .step::after {
   content: "→";
   position: absolute;
-  right: -16px; top: 50%;
-  transform: translateY(-50%);
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translate(-50%, -50%);
   font-family: var(--mono);
   color: var(--stanford-red);
   font-size: 16px;
@@ -502,66 +649,158 @@ table.compare tr:hover td { background: var(--soft); }
   opacity: 0.7;
 }
 
-/* ====== BOTTOM NAV ====== */
+/* ====== BOTTOM NAV — the puppy's ground ====== */
 .nav {
+  --nav-button-size: 44px;
+  --nav-side-offset: 0px;
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: 56px;
-  background: var(--white);
-  border-top: 1px solid var(--rule);
+  height: 76px;
+  background: transparent;
   display: flex;
   align-items: center;
   padding: 0 32px;
-  justify-content: space-between;
+  justify-content: center;
   z-index: 50;
+}
+.nav-soil {
+  display: none;
 }
 .nav-btn {
   font-family: var(--mono);
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  background: none;
-  border: 1px solid var(--black);
-  color: var(--black);
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: all 150ms ease;
-  font-weight: 500;
-}
-.nav-btn:hover {
   background: var(--stanford-red);
-  border-color: var(--stanford-red);
-  color: var(--white);
+  border: 1px solid var(--stanford-red);
+  color: var(--cream);
+  width: var(--nav-button-size);
+  height: var(--nav-button-size);
+  padding: 0;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  font-weight: 500;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-.nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.nav-btn:disabled:hover { background: none; color: var(--black); border-color: var(--black); }
+#prev-btn,
+#next-btn {
+  position: fixed;
+  top: 50%;
+  z-index: 60;
+  transform: translateY(-50%);
+}
+#prev-btn { left: var(--nav-side-offset); }
+#next-btn { right: var(--nav-side-offset); }
+.nav-btn:hover {
+  background: var(--stanford-red-deep);
+  border-color: var(--stanford-red-deep);
+  color: var(--cream);
+}
+.nav-btn:disabled { opacity: 0.28; cursor: not-allowed; }
+.nav-btn:disabled:hover { background: var(--stanford-red); color: var(--cream); border-color: var(--stanford-red); }
+.nav-arrow {
+  display: inline-block;
+  font-size: 1.35em;
+  line-height: 1;
+  transition: transform 180ms ease;
+  will-change: transform;
+}
+#prev-btn:hover:not(:disabled) .nav-arrow {
+  animation: arrow-retreat-left 620ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+#next-btn:hover:not(:disabled) .nav-arrow {
+  animation: arrow-drive-right 620ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+#prev-btn:active:not(:disabled) .nav-arrow { transform: translateX(-7px) scaleX(0.82); }
+#next-btn:active:not(:disabled) .nav-arrow { transform: translateX(7px) scaleX(1.18); }
+@keyframes arrow-retreat-left {
+  0%   { transform: translateX(0) rotate(0deg); }
+  38%  { transform: translateX(-9px) rotate(-10deg); }
+  62%  { transform: translateX(-5px) rotate(5deg); }
+  100% { transform: translateX(-7px) rotate(0deg); }
+}
+@keyframes arrow-drive-right {
+  0%   { transform: translateX(0) scaleX(1); }
+  34%  { transform: translateX(11px) scaleX(1.28); }
+  58%  { transform: translateX(6px) scaleX(0.94); }
+  100% { transform: translateX(8px) scaleX(1.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #prev-btn:hover:not(:disabled) .nav-arrow,
+  #next-btn:hover:not(:disabled) .nav-arrow {
+    animation: none;
+  }
+}
 
-.dots {
+.nav-center {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+}
+.dots {
+  display: none;
+  gap: 5px;
   align-items: center;
 }
 .dot {
-  width: 8px; height: 8px;
-  border: 1px solid var(--black);
-  background: var(--white);
+  width: 7px; height: 7px;
+  border: 1px solid rgba(244,241,234,0.5);
+  background: transparent;
   cursor: pointer;
   transition: all 150ms ease;
+  border-radius: 1px;
 }
 .dot.active {
-  background: var(--stanford-red);
-  border-color: var(--stanford-red);
-  transform: scale(1.2);
+  background: var(--cream);
+  border-color: var(--cream);
+  transform: scale(1.25);
 }
-.dot:hover { background: var(--black); }
-.dot.active:hover { background: var(--stanford-red); }
+.dot:hover { background: rgba(244,241,234,0.45); }
+.dot.active:hover { background: var(--cream); }
+
+#slide-select {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid rgba(107,55,31,0.28);
+  color: var(--stanford-red);
+  width: clamp(180px, 24vw, 280px);
+  padding: 5px 12px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 0;
+  outline: none;
+}
+#slide-select option {
+  background: var(--cream);
+  color: var(--stanford-red);
+  letter-spacing: 0;
+}
+
+/* Keep buttons & nav-center above the soil SVG layer */
+.nav-btn { position: relative; z-index: 3; }
+
 
 /* ====== CLOSING SLIDE ====== */
 .closing {
   height: 100%;
   display: grid;
   grid-template-rows: auto 1fr auto;
+  gap: 24px;
+}
+.closing-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 40px;
+  align-items: end;
+  min-height: 0;
 }
 .closing .big-mark {
   font-family: var(--serif);
@@ -602,6 +841,51 @@ table.compare tr:hover td { background: var(--soft); }
   opacity: 0.85;
 }
 
+/* Big puppy on closing slide */
+.closing-puppy {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+}
+.closing-puppy svg {
+  width: 100%;
+  max-width: 440px;
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  transform-box: border-box;
+  opacity: 0;
+}
+.slide[data-section="Closing"].active .closing-puppy svg {
+  animation: closing-grow 0.65s 0.25s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+@keyframes closing-grow {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+/* Bob and blink on the closing slide's big puppy */
+.closing-puppy #cp-character {
+  animation: puppy-bob 2.6s ease-in-out infinite;
+  transform-origin: 50% 100%;
+  transform-box: fill-box;
+}
+.closing-puppy .cp-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: puppy-blink 4.7s ease-in-out infinite;
+}
+.closing-puppy .cp-tail {
+  transform-box: view-box;
+  transform-origin: 650px 800px;
+  animation: puppy-wag 1.4s ease-in-out infinite;
+}
+/* Hide the fixed corner mascot on the closing slide — big one replaces it */
+body:has(.slide[data-section="Cover"].active) .puppy-mascot,
+body:has(.slide[data-section="Closing"].active) .puppy-mascot { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .closing-puppy svg { animation: none !important; transform: scaleY(1); opacity: 1; }
+}
+
 /* ====== UTIL ====== */
 .bullet-list { list-style: none; margin-top: 8px; }
 .bullet-list li {
@@ -639,22 +923,300 @@ table.compare tr:hover td { background: var(--soft); }
   vertical-align: middle;
 }
 
+/* ====== CUTE BG ACCENTS + PUPPY MASCOT ====== */
+.bg-accent {
+  display: none;
+  position: fixed;
+  width: 170px;
+  height: 170px;
+  background-image: radial-gradient(circle, var(--cream-dot) 2.4px, transparent 2.6px);
+  background-size: 22px 22px;
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 28px;
+}
+.bg-accent.top-left  { top: 60px;  left: 12px; }
+.bg-accent.top-right { top: 60px;  right: 12px; }
+
+.puppy-mascot {
+  position: fixed;
+  top: 62px;
+  right: 72px;
+  bottom: auto;
+  left: auto;
+  width: 118px;
+  height: 118px;
+  z-index: 55;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(60, 40, 30, 0.12));
+}
+.puppy-mascot svg { width: 100%; height: 100%; display: block; position: relative; z-index: 1; }
+.puppy-mascot #puppy-character {
+  animation: puppy-bob 2.6s ease-in-out infinite;
+  transform-origin: 50% 100%;
+  transform-box: fill-box;
+  will-change: transform;
+}
+.puppy-mascot .puppy-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: puppy-blink 4.7s ease-in-out infinite;
+  will-change: transform;
+}
+.puppy-mascot .puppy-tail {
+  transform-box: view-box;
+  transform-origin: 650px 800px;
+  animation: puppy-wag 1.4s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes puppy-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+@keyframes puppy-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  94%, 96%      { transform: scaleY(0.08); }
+}
+@keyframes puppy-wag {
+  0%, 100% { transform: rotate(-14deg); }
+  50%      { transform: rotate(14deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .puppy-mascot #puppy-character,
+  .puppy-mascot .puppy-eye,
+  .puppy-mascot .puppy-tail { animation: none; }
+}
+
 /* ====== RESPONSIVE ====== */
+/* ====== TABLET (≤900px) ====== */
 @media (max-width: 900px) {
-  .slide { padding: 40px 28px 28px; }
-  .cover { grid-template-columns: 1fr; padding: 32px 28px; gap: 24px; }
+  /* Layout */
+  .stage { bottom: 68px; }
+  .slide { inset: 20px 22px 16px; padding: 16px; overflow-y: auto; }
+
+  /* Cover */
+  .cover { grid-template-columns: 1fr; padding: 32px 28px; gap: 20px; }
   .cover-right { display: none; }
-  .cols-2, .cols-3, .split { grid-template-columns: 1fr; gap: 20px; }
+  .cover-left h1 { font-size: clamp(40px, 8vw, 72px); }
+
+  /* Grids → single column */
+  .cols-2, .cols-3, .split { grid-template-columns: 1fr; gap: 16px; }
+
+  /* Defs */
   .defs .row { grid-template-columns: 1fr; gap: 4px; }
-  .closing .resources { grid-template-columns: 1fr 1fr; }
-  .pipeline .step::after { display: none; }
-  .pipeline .step { margin-right: 0; }
+  .defs .term { font-size: 11px; }
+
+  /* Tables — horizontal scroll */
+  table.compare { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.compare td:first-child { width: 120px; }
+
+  /* Pipeline — vertical flow */
+  .pipeline {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .pipeline .step {
+    min-width: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+  }
+  .pipeline .step::after {
+    content: "↓";
+    display: block;
+    left: 50%;
+    right: auto;
+    top: auto;
+    bottom: -22px;
+    transform: translateX(-50%);
+  }
+
+  /* Closing slide */
+  .closing-body { grid-template-columns: 1fr; }
+  .closing-puppy { height: 260px; }
+  .closing .resources { grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Stat row */
+  .stat-row { gap: 24px; }
+  .stat .n { font-size: clamp(24px, 5vw, 36px); }
+
+  /* Rail */
+  .rail-left span:not(.mark) { display: none; }
+
+  /* Nav */
+  .nav { --nav-button-size: 42px; --nav-side-offset: 0px; height: 68px; padding: 0 24px; }
+  #slide-select { width: clamp(170px, 34vw, 240px); padding: 5px 10px; }
+
+  /* Tags */
+  .tags { gap: 6px; }
+
+  /* Puppy */
+  .puppy-mascot {
+    width: 90px;
+    height: 90px;
+    top: 58px;
+    right: 54px;
+    bottom: auto;
+    left: auto;
+  }
+  .bg-accent { display: none; }
+}
+
+/* ====== MOBILE (≤600px) ====== */
+@media (max-width: 600px) {
+  /* Layout */
+  .stage { bottom: 60px; }
+  .slide { inset: 14px 10px 12px; padding: 96px 12px 14px; }
+  .nav { height: 60px; padding: 0 14px; }
+
+  /* Rail */
+  .rail { padding: 0 16px; }
+  .rail-left { gap: 8px; font-size: 10px; }
+  .rail-right { font-size: 10px; }
+  .rail-right #section-label,
+  .rail-right .sep:first-of-type { display: none; }
+
+  /* Typography */
+  h2.section { font-size: clamp(22px, 6vw, 32px); }
+  .lede { font-size: clamp(14px, 3.5vw, 17px); margin-bottom: 16px; }
+  .eyebrow { font-size: 10px; margin-bottom: 12px; }
+
+  /* Cover */
+  .cover { padding: 24px 18px; gap: 14px; }
+  .cover-left h1 { font-size: clamp(36px, 10vw, 56px); }
+  .cover-left .cover-sub { font-size: clamp(14px, 3.5vw, 18px); }
+  .cover-left .byline { flex-wrap: wrap; gap: 14px; font-size: 10px; }
+
+  /* Cards */
+  .card { padding: 16px 16px; }
+  .card h3 { font-size: clamp(15px, 4vw, 18px); }
+  .card p { font-size: 13px; }
+
+  /* Definitions */
+  .defs .row { padding: 10px 0; }
+  .defs .def { font-size: 13px; }
+
+  /* Tables */
+  table.compare th, table.compare td { padding: 9px 10px; font-size: 12px; }
+  table.compare td:first-child { width: 90px; font-size: 10px; }
+  table.compare { max-width: 100%; }
+
+  /* Pipeline */
+  .pipeline .step { padding: 12px 12px; }
+  .pipeline .step h4 { font-size: 14px; }
+  .pipeline .step p { font-size: 12px; }
+
+  /* Code blocks */
+  pre.code {
+    font-size: 11px;
+    padding: 12px 14px;
+    min-height: calc(3lh + 24px);
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* Closing slide */
+  body:has(.slide[data-section="Closing"].active) .slide {
+    padding-top: 14px;
+  }
+  .closing {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: auto;
+    min-height: 100%;
+  }
+  .closing > .eyebrow { order: 0; }
+  .closing-body {
+    display: contents;
+  }
+  .closing-puppy {
+    order: 1;
+    height: auto;
+    align-items: center;
+  }
+  .closing-puppy svg {
+    width: min(220px, 68vw);
+    max-width: none;
+  }
+  .closing-copy {
+    order: 2;
+  }
+  .closing .big-mark {
+    font-size: clamp(48px, 13vw, 72px);
+    margin-top: 0;
+    line-height: 0.75;
+  }
+  .closing h2.section {
+    font-size: clamp(23px, 7.4vw, 34px);
+    max-width: none !important;
+    margin-top: 10px !important;
+  }
+  .closing .lede {
+    margin-top: 10px !important;
+  }
+  .closing-resources { order: 3; }
+  .closing .resources { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Stat row */
+  .stat-row { gap: 16px; }
+
+  /* Nav — transparent, no soil */
+  .nav {
+    --nav-button-size: 38px;
+    --nav-side-offset: 0px;
+    background: transparent;
+    border-top: none;
+    height: 56px;
+    padding: 0 14px;
+  }
+  .nav-soil { display: none; }
+
+  /* Nav buttons — flip to primary brown (on cream slide bg) */
+  .nav-btn {
+    width: var(--nav-button-size);
+    height: var(--nav-button-size);
+    padding: 0;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    border-color: var(--stanford-red);
+    color: var(--cream);
+  }
+  .nav-btn:hover { background: var(--stanford-red-deep); border-color: var(--stanford-red-deep); color: var(--cream); }
+  .nav-btn:disabled { opacity: 0.28; }
+  .nav-btn:disabled:hover { background: var(--stanford-red); color: var(--cream); border-color: var(--stanford-red); }
+  #prev-btn,
+  #next-btn {
+    top: auto;
+    bottom: 10px;
+    transform: none;
+  }
+  #prev-btn { left: calc(50% - var(--nav-button-size) - 4px); }
+  #next-btn { right: calc(50% - var(--nav-button-size) - 4px); }
+
+  /* Dots → dropdown */
+  .dots { display: none; }
+  #slide-select { display: block; width: clamp(104px, 29vw, 132px); padding: 5px 8px; }
+
+  /* Puppy */
+  .puppy-mascot {
+    width: 72px;
+    height: 72px;
+    top: 54px;
+    right: 34px;
+    bottom: auto;
+    left: auto;
+  }
+  .stage { bottom: 56px; }
 }
 
 /* fullscreen tweak */
 .slide::-webkit-scrollbar { width: 6px; }
 .slide::-webkit-scrollbar-thumb { background: var(--stanford-red); }
 .slide::-webkit-scrollbar-track { background: transparent; }
+
 </style>
 </head>
 <body>
@@ -664,6 +1226,10 @@ table.compare tr:hover td { background: var(--soft); }
   <div class="rail-left">
     <span class="mark"></span>
     <span>Local AI &nbsp;·&nbsp; A Field Guide</span>
+  </div>
+  <div class="nav-center">
+    <div class="dots" id="dots"></div>
+    <select id="slide-select" aria-label="Jump to slide"></select>
   </div>
   <div class="rail-right">
     <span id="section-label">COVER</span>
@@ -680,46 +1246,16 @@ table.compare tr:hover td { background: var(--soft); }
 
   <!-- SLIDE 01 - COVER -->
   <section class="slide active" data-section="Cover">
-    <div class="cover">
-      <div class="cover-left">
-        <div class="cover-meta"><span class="bar"></span> A Comprehensive Field Guide · 2026</div>
-        <h1>Local <span class="accent">AI.</span><br>Off the cloud,<br>on your machine.</h1>
-        <div class="cover-sub">The concepts you actually need to understand before you download your first GGUF file.</div>
-        <div class="byline">
-          <div><span>Topic</span>Foundations</div>
-          <div><span>Slides</span>Nineteen</div>
-          <div><span>Reading</span>~14 min</div>
-        </div>
-      </div>
-      <div class="cover-right">
-        <div class="cover-art">
-          <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-            <!-- background grid -->
-            <defs>
-              <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#E6E6E6" stroke-width="0.5"/>
-              </pattern>
-            </defs>
-            <rect width="400" height="400" fill="url(#grid)"/>
-            <!-- big red square -->
-            <rect x="60" y="60" width="200" height="200" fill="#8C1515"/>
-            <!-- black square overlap -->
-            <rect x="160" y="160" width="180" height="180" fill="#000000"/>
-            <!-- inner white -->
-            <rect x="200" y="200" width="100" height="100" fill="#FFFFFF"/>
-            <!-- crosshair -->
-            <line x1="250" y1="180" x2="250" y2="320" stroke="#FFFFFF" stroke-width="1"/>
-            <line x1="180" y1="250" x2="320" y2="250" stroke="#FFFFFF" stroke-width="1"/>
-            <!-- accent dots -->
-            <circle cx="80" cy="80" r="4" fill="#FFFFFF"/>
-            <circle cx="240" cy="80" r="4" fill="#FFFFFF"/>
-            <circle cx="80" cy="240" r="4" fill="#FFFFFF"/>
-            <!-- corner label -->
-            <text x="68" y="80" font-family="JetBrains Mono, monospace" font-size="10" fill="#FFFFFF" letter-spacing="2">01</text>
-          </svg>
-        </div>
-      </div>
-    </div>
+    <img
+      class="cover-image"
+      src="assets/cover-1200.jpg"
+      srcset="assets/cover-768.jpg 768w, assets/cover-1200.jpg 1200w, assets/cover-1536.jpg 1536w"
+      sizes="100vw"
+      width="1536"
+      height="1024"
+      alt="Local AI field guide cover"
+      fetchpriority="high"
+      decoding="async">
   </section>
 
   <!-- SLIDE 02 - WHY LOCAL -->
@@ -787,15 +1323,18 @@ table.compare tr:hover td { background: var(--soft); }
       <div>
         <h3 style="font-family:var(--serif);font-weight:600;font-size:20px;margin-bottom:14px;">Formats to know</h3>
         <ul class="bullet-list">
-          <li><strong>GGUF</strong> — llama.cpp's native format. CPU-friendly, runs anywhere. The default for hobbyists.</li>
-          <li><strong>GPTQ</strong> — GPU-optimized quantization. Fast, popular on text-generation-webui.</li>
-          <li><strong>AWQ</strong> — Activation-aware weight quantization. Preserves quality at low bits.</li>
-          <li><strong>EXL2 / EXL3</strong> — ExLlama's mixed-precision format. Excellent for NVIDIA.</li>
-          <li><strong>MLX</strong> — Apple Silicon's native format via the MLX framework.</li>
+          <li><strong>GGUF</strong> — The local-chat default. llama.cpp-native, CPU/Mac-friendly, used by Ollama and LM Studio.</li>
+          <li><strong>Safetensors</strong> — The common Hugging Face checkpoint format. Often the source before conversion or quantization.</li>
+          <li><strong>EXL2</strong> — ExLlama's mixed-precision format. Fast quantized inference on NVIDIA GPUs.</li>
+          <li><strong>GPTQ / AWQ</strong> — GPU quant formats. Still common in text-generation-webui, vLLM, and older model drops.</li>
+          <li><strong>MLX</strong> — Apple Silicon-native weights for the MLX ecosystem.</li>
+          <li><strong>ONNX</strong> — Portable deployment format for apps, edge devices, Windows GPUs, and NPUs.</li>
         </ul>
         <div class="tags" style="margin-top:18px;">
           <span class="tag red">Rule of thumb</span>
-          <span class="tag">Q4_K_M for most cases</span>
+          <span class="tag">GGUF for local chat</span>
+          <span class="tag">Safetensors as source</span>
+          <span class="tag">EXL2/GPTQ/AWQ for NVIDIA</span>
         </div>
       </div>
     </div>
@@ -1033,11 +1572,12 @@ What is quantization?<span class="c-tok">&lt;|im_end|&gt;</span>
       <div>
         <h3 style="font-family:var(--serif);font-weight:600;font-size:20px;margin-bottom:14px;">Embedding models</h3>
         <ul class="bullet-list">
-          <li><strong>BGE</strong> — BAAI General Embedding. Strong, open, multilingual.</li>
-          <li><strong>nomic-embed</strong> — Open weights, long context, popular default.</li>
-          <li><strong>E5 / mE5</strong> — Microsoft's family. Very competitive.</li>
-          <li><strong>Jina embeddings</strong> — Long-context (8K+) variants.</li>
-          <li><strong>GTE</strong> — Alibaba's general text embeddings.</li>
+          <li><strong>pplx-embed</strong> — Perplexity's 2026 release. 0.6B &amp; 4B, MIT, Qwen3-base with bidirectional attention. Tops MTEB Multilingual v2; up to 32× storage reduction via quantization. No task prefixes needed.</li>
+          <li><strong>Qwen3-Embedding</strong> — 0.6B / 4B / 8B from Alibaba. The peer model pplx-embed is built on. Strong multilingual.</li>
+          <li><strong>BGE</strong> — BAAI General Embedding. Long-standing strong baseline, multilingual.</li>
+          <li><strong>nomic-embed</strong> — Open weights, long context, popular Ollama default.</li>
+          <li><strong>E5 / mE5</strong> — Microsoft's family. Still very competitive.</li>
+          <li><strong>Jina · GTE</strong> — Long-context (Jina) and Alibaba's GTE general text embeddings.</li>
         </ul>
       </div>
       <div>
@@ -1146,8 +1686,8 @@ What is quantization?<span class="c-tok">&lt;|im_end|&gt;</span>
     <div class="defs">
       <div class="row"><div class="term">Runtime</div><div class="def"><strong>Ollama</strong> for ease, <strong>LM Studio</strong> if you want a GUI, <strong>llama.cpp</strong> directly if you're a developer. All speak the OpenAI API format.</div></div>
       <div class="row"><div class="term">First model</div><div class="def"><strong>Qwen3 8B</strong> or <strong>Gemma 4 E4B</strong> at Q4 — broadly capable, runs on most hardware. <strong>Phi-4-mini-instruct</strong> if you're CPU-only on a laptop. Enable Qwen3's thinking mode (or pull <strong>DeepSeek-R2-Distill-Qwen-7B</strong>) when you want reasoning.</div></div>
-      <div class="row"><div class="term">Coding model</div><div class="def"><strong>Qwen3-Coder</strong> or <strong>DeepSeek-Coder-V2-Lite</strong> for local; <strong>Kimi K2.6</strong> if you have the VRAM and want a long-horizon agent. Use through Continue.dev, Aider, Zed, or Cursor's local-model mode.</div></div>
-      <div class="row"><div class="term">Embedding model</div><div class="def"><strong>nomic-embed-text</strong> or <strong>BGE-large</strong>. Pull through Ollama for one-line install.</div></div>
+      <div class="row"><div class="term">Coding model</div><div class="def"><strong>Qwen3-Coder</strong> or <strong>DeepSeek-Coder-V2-Lite</strong> for local; <strong>Kimi K2.6</strong> if you have the VRAM and want a long-horizon agent. Use through opencode, Claude Code, Zed, or Cursor's local-model mode.</div></div>
+      <div class="row"><div class="term">Embedding model</div><div class="def"><strong>nomic-embed-text</strong> or <strong>BGE-large</strong> via Ollama for one-line install. Upgrade to <strong>pplx-embed-v1</strong> (Perplexity, MIT, MTEB-Multilingual SOTA) when you need top-shelf retrieval.</div></div>
       <div class="row"><div class="term">Vector store</div><div class="def"><strong>Chroma</strong> for prototypes, <strong>Qdrant</strong> when it gets real. <strong>LanceDB</strong> if you want embedded.</div></div>
       <div class="row"><div class="term">RAG framework</div><div class="def"><strong>LlamaIndex</strong> for retrieval focus, <strong>LangChain</strong> for orchestration, or roll your own — it's a few hundred lines.</div></div>
       <div class="row"><div class="term">Where to browse</div><div class="def"><strong>Hugging Face</strong> for weights, <strong>r/LocalLLaMA</strong> for news, <strong>TheBloke</strong> &amp; <strong>bartowski</strong> for quantized GGUFs.</div></div>
@@ -1176,12 +1716,108 @@ What is quantization?<span class="c-tok">&lt;|im_end|&gt;</span>
   <section class="slide" data-section="Closing">
     <div class="closing">
       <div class="eyebrow">End of guide — 19</div>
-      <div>
-        <div class="big-mark">¶</div>
-        <h2 class="section" style="margin-top:20px;max-width:18ch;">The fastest way to learn this is to <em>start running things.</em></h2>
-        <p class="lede" style="margin-top:14px;">Install Ollama. Pull a 7B model. Ask it something. Everything in this deck makes more sense once tokens are streaming out of your own machine.</p>
+      <div class="closing-body">
+        <div class="closing-copy">
+          <div class="big-mark">¶</div>
+          <h2 class="section" style="margin-top:20px;max-width:18ch;">The fastest way to learn this is to <em>start running things.</em></h2>
+          <p class="lede" style="margin-top:14px;">Install Ollama. Pull a 7B model. Ask it something. Everything in this deck makes more sense once tokens are streaming out of your own machine.</p>
+        </div>
+        <div class="closing-puppy">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+            <defs>
+              <filter id="cpSoftShadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#3D261D" flood-opacity="0.14"/>
+              </filter>
+              <filter id="cpTagShadow" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#2A9D8F" flood-opacity="0.2"/>
+              </filter>
+              <linearGradient id="cpFur" x1="10%" y1="0%" x2="90%" y2="100%">
+                <stop offset="0%" stop-color="#FFE3C2"/><stop offset="50%" stop-color="#DE9B65"/><stop offset="100%" stop-color="#B86B3E"/>
+              </linearGradient>
+              <linearGradient id="cpBody" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#D18E5A"/><stop offset="100%" stop-color="#9E5931"/>
+              </linearGradient>
+              <linearGradient id="cpEarL" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#B56A3E"/><stop offset="100%" stop-color="#6B371F"/>
+              </linearGradient>
+              <linearGradient id="cpEarR" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#9E5931"/><stop offset="100%" stop-color="#4A2010"/>
+              </linearGradient>
+              <radialGradient id="cpMuzzle" cx="45%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#FFFFFF"/><stop offset="60%" stop-color="#FFEDD6"/><stop offset="100%" stop-color="#EAB282"/>
+              </radialGradient>
+              <clipPath id="cpHeadClip">
+                <path d="M 450 180 C 620 180, 720 280, 720 440 C 720 620, 580 720, 450 720 C 320 720, 180 620, 180 440 C 180 280, 280 180, 450 180 Z"/>
+              </clipPath>
+            </defs>
+            <ellipse cx="450" cy="875" rx="360" ry="22" fill="#D3C9B8" opacity="0.8"/>
+            <g id="cp-character">
+              <g class="cp-tail">
+                <path d="M 650 800 C 750 820, 850 780, 830 650 C 810 520, 750 680, 650 750 Z" fill="url(#cpBody)" filter="url(#cpSoftShadow)"/>
+                <path d="M 850 640 A 30 30 0 0 1 860 690" fill="none" stroke="#F4A261" stroke-width="8" stroke-linecap="round"/>
+                <path d="M 870 650 A 40 40 0 0 1 880 710" fill="none" stroke="#F4A261" stroke-width="8" stroke-linecap="round"/>
+              </g>
+              <path d="M 300 650 C 200 700, 180 800, 200 900 L 700 900 C 720 800, 700 700, 600 650 Z" fill="url(#cpBody)" filter="url(#cpSoftShadow)"/>
+              <g filter="url(#cpSoftShadow)">
+                <ellipse cx="280" cy="840" rx="85" ry="50" fill="#B56A3E"/>
+                <circle cx="220" cy="845" r="12" fill="#E29864"/><circle cx="255" cy="820" r="15" fill="#E29864"/>
+                <circle cx="295" cy="815" r="16" fill="#E29864"/><circle cx="335" cy="830" r="14" fill="#E29864"/>
+              </g>
+              <g filter="url(#cpSoftShadow)">
+                <ellipse cx="620" cy="840" rx="85" ry="50" fill="#9E5931"/>
+                <circle cx="680" cy="845" r="12" fill="#E29864"/><circle cx="645" cy="820" r="15" fill="#E29864"/>
+                <circle cx="605" cy="815" r="16" fill="#E29864"/><circle cx="565" cy="830" r="14" fill="#E29864"/>
+              </g>
+              <path d="M 300 280 C 120 220, 40 380, 80 580 C 110 720, 250 780, 290 640 C 330 500, 300 280, 300 280 Z" fill="url(#cpEarL)" filter="url(#cpSoftShadow)"/>
+              <path d="M 600 280 C 780 220, 860 380, 820 580 C 790 720, 650 780, 610 640 C 570 500, 600 280, 600 280 Z" fill="url(#cpEarR)" filter="url(#cpSoftShadow)"/>
+              <g filter="url(#cpSoftShadow)">
+                <path d="M 450 180 C 620 180, 720 280, 720 440 C 720 620, 580 720, 450 720 C 320 720, 180 620, 180 440 C 180 280, 280 180, 450 180 Z" fill="url(#cpFur)"/>
+                <g clip-path="url(#cpHeadClip)">
+                  <path d="M 380 180 C 380 320, 360 480, 450 480 C 540 480, 520 320, 520 180 Z" fill="#FFF4E0" opacity="0.9"/>
+                  <path d="M 520 180 C 550 300, 420 500, 500 650 C 600 750, 800 600, 720 280 Z" fill="#C77C4E" opacity="0.85"/>
+                  <circle cx="250" cy="550" r="140" fill="#DE9B65" opacity="0.6"/>
+                  <circle cx="280" cy="250" r="60" fill="#E9C46A" opacity="0.7"/>
+                  <path d="M 100 650 C 250 750, 650 750, 800 650 L 800 800 L 100 800 Z" fill="#FFF2DE" opacity="0.4"/>
+                </g>
+              </g>
+              <path d="M 425 185 Q 435 140 450 175 Q 465 130 475 185" fill="none" stroke="#B86B3E" stroke-width="12" stroke-linecap="round"/>
+              <path d="M 320 670 Q 450 740 580 670 L 570 705 Q 450 770 330 705 Z" fill="#2A9D8F" filter="url(#cpSoftShadow)"/>
+              <polygon points="450,745 475,780 450,815 425,780" fill="#E9C46A" filter="url(#cpTagShadow)"/>
+              <circle cx="450" cy="762" r="5" fill="#EADFCE"/>
+              <ellipse cx="450" cy="560" rx="170" ry="110" fill="url(#cpMuzzle)" filter="url(#cpSoftShadow)"/>
+              <circle cx="280" cy="490" r="35" fill="#F26D6D" opacity="0.25"/>
+              <circle cx="620" cy="490" r="35" fill="#F26D6D" opacity="0.25"/>
+              <circle cx="340" cy="540" r="4.5" fill="#B86B3E" opacity="0.7"/>
+              <circle cx="320" cy="565" r="4.5" fill="#B86B3E" opacity="0.7"/>
+              <circle cx="360" cy="570" r="4.5" fill="#B86B3E" opacity="0.7"/>
+              <circle cx="560" cy="540" r="4.5" fill="#B86B3E" opacity="0.7"/>
+              <circle cx="580" cy="565" r="4.5" fill="#B86B3E" opacity="0.7"/>
+              <circle cx="540" cy="570" r="4.5" fill="#B86B3E" opacity="0.7"/>
+              <g class="cp-eye">
+                <ellipse cx="330" cy="400" rx="38" ry="55" fill="#21140F" transform="rotate(-8 330 400)"/>
+                <circle cx="315" cy="380" r="14" fill="#FFFFFF"/>
+                <circle cx="345" cy="425" r="6" fill="#FFFFFF"/>
+                <ellipse cx="335" cy="420" rx="15" ry="8" fill="#78C0E0" transform="rotate(-20 335 420)" opacity="0.85"/>
+              </g>
+              <g class="cp-eye">
+                <ellipse cx="570" cy="400" rx="38" ry="55" fill="#21140F" transform="rotate(8 570 400)"/>
+                <circle cx="555" cy="380" r="14" fill="#FFFFFF"/>
+                <circle cx="585" cy="425" r="6" fill="#FFFFFF"/>
+                <ellipse cx="565" cy="420" rx="15" ry="8" fill="#78C0E0" transform="rotate(20 565 420)" opacity="0.85"/>
+              </g>
+              <path d="M 280 330 Q 320 280 360 290" fill="none" stroke="#3D261D" stroke-width="16" stroke-linecap="round"/>
+              <path d="M 620 330 Q 580 280 540 290" fill="none" stroke="#3D261D" stroke-width="16" stroke-linecap="round"/>
+              <path d="M 415 555 C 415 640, 485 640, 485 555 Z" fill="#F47C7C"/>
+              <line x1="450" y1="555" x2="450" y2="615" stroke="#D95353" stroke-width="6" stroke-linecap="round"/>
+              <path d="M 400 480 C 400 450, 500 450, 500 480 C 500 520, 470 540, 450 540 C 430 540, 400 520, 400 480 Z" fill="#3D261D"/>
+              <ellipse cx="430" cy="475" rx="14" ry="6" fill="#FFFFFF" opacity="0.5" transform="rotate(-15 430 475)"/>
+              <path d="M 450 540 C 450 580, 390 600, 360 560" fill="none" stroke="#3D261D" stroke-width="12" stroke-linecap="round"/>
+              <path d="M 450 540 C 450 580, 510 600, 540 560" fill="none" stroke="#3D261D" stroke-width="12" stroke-linecap="round"/>
+            </g>
+          </svg>
+        </div>
       </div>
-      <div class="resources">
+      <div class="resources closing-resources">
         <div class="res"><div class="lab">Weights</div><div class="val">huggingface.co</div><div class="desc">The open-model hub. Every weight, every quant.</div></div>
         <div class="res"><div class="lab">Community</div><div class="val">r/LocalLLaMA</div><div class="desc">News, benchmarks, drama, working examples.</div></div>
         <div class="res"><div class="lab">Reference</div><div class="val">llama.cpp · ollama</div><div class="desc">The engines worth reading the source of.</div></div>
@@ -1193,11 +1829,133 @@ What is quantization?<span class="c-tok">&lt;|im_end|&gt;</span>
 </div>
 </div>
 
-<!-- BOTTOM NAV -->
+<!-- CUTE BG ACCENTS -->
+<div class="bg-accent top-left" aria-hidden="true"></div>
+<div class="bg-accent top-right" aria-hidden="true"></div>
+
+<!-- PUPPY MASCOT -->
+<div class="puppy-mascot" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+    <defs>
+      <filter id="puppySoftShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#3D261D" flood-opacity="0.12"/>
+      </filter>
+      <filter id="puppyTagShadow" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#2A9D8F" flood-opacity="0.2"/>
+      </filter>
+      <linearGradient id="puppyFur" x1="10%" y1="0%" x2="90%" y2="100%">
+        <stop offset="0%" stop-color="#FFE3C2"/><stop offset="50%" stop-color="#DE9B65"/><stop offset="100%" stop-color="#B86B3E"/>
+      </linearGradient>
+      <linearGradient id="puppyBody" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#D18E5A"/><stop offset="100%" stop-color="#9E5931"/>
+      </linearGradient>
+      <linearGradient id="puppyEarL" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#B56A3E"/><stop offset="100%" stop-color="#6B371F"/>
+      </linearGradient>
+      <linearGradient id="puppyEarR" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#9E5931"/><stop offset="100%" stop-color="#4A2010"/>
+      </linearGradient>
+      <radialGradient id="puppyMuzzle" cx="45%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="#FFFFFF"/><stop offset="60%" stop-color="#FFEDD6"/><stop offset="100%" stop-color="#EAB282"/>
+      </radialGradient>
+      <clipPath id="puppyHeadClip">
+        <path d="M 450 180 C 620 180, 720 280, 720 440 C 720 620, 580 720, 450 720 C 320 720, 180 620, 180 440 C 180 280, 280 180, 450 180 Z"/>
+      </clipPath>
+    </defs>
+    <ellipse cx="450" cy="875" rx="360" ry="22" fill="#D3C9B8" opacity="0.8"/>
+    <g id="puppy-character">
+      <g class="puppy-tail">
+        <path d="M 650 800 C 750 820, 850 780, 830 650 C 810 520, 750 680, 650 750 Z" fill="url(#puppyBody)" filter="url(#puppySoftShadow)"/>
+        <path d="M 850 640 A 30 30 0 0 1 860 690" fill="none" stroke="#F4A261" stroke-width="8" stroke-linecap="round"/>
+        <path d="M 870 650 A 40 40 0 0 1 880 710" fill="none" stroke="#F4A261" stroke-width="8" stroke-linecap="round"/>
+      </g>
+      <path d="M 300 650 C 200 700, 180 800, 200 900 L 700 900 C 720 800, 700 700, 600 650 Z" fill="url(#puppyBody)" filter="url(#puppySoftShadow)"/>
+      <g filter="url(#puppySoftShadow)">
+        <ellipse cx="280" cy="840" rx="85" ry="50" fill="#B56A3E"/>
+        <circle cx="220" cy="845" r="12" fill="#E29864"/><circle cx="255" cy="820" r="15" fill="#E29864"/>
+        <circle cx="295" cy="815" r="16" fill="#E29864"/><circle cx="335" cy="830" r="14" fill="#E29864"/>
+      </g>
+      <g filter="url(#puppySoftShadow)">
+        <ellipse cx="620" cy="840" rx="85" ry="50" fill="#9E5931"/>
+        <circle cx="680" cy="845" r="12" fill="#E29864"/><circle cx="645" cy="820" r="15" fill="#E29864"/>
+        <circle cx="605" cy="815" r="16" fill="#E29864"/><circle cx="565" cy="830" r="14" fill="#E29864"/>
+      </g>
+      <path d="M 300 280 C 120 220, 40 380, 80 580 C 110 720, 250 780, 290 640 C 330 500, 300 280, 300 280 Z" fill="url(#puppyEarL)" filter="url(#puppySoftShadow)"/>
+      <path d="M 600 280 C 780 220, 860 380, 820 580 C 790 720, 650 780, 610 640 C 570 500, 600 280, 600 280 Z" fill="url(#puppyEarR)" filter="url(#puppySoftShadow)"/>
+      <g filter="url(#puppySoftShadow)">
+        <path d="M 450 180 C 620 180, 720 280, 720 440 C 720 620, 580 720, 450 720 C 320 720, 180 620, 180 440 C 180 280, 280 180, 450 180 Z" fill="url(#puppyFur)"/>
+        <g clip-path="url(#puppyHeadClip)">
+          <path d="M 380 180 C 380 320, 360 480, 450 480 C 540 480, 520 320, 520 180 Z" fill="#FFF4E0" opacity="0.9"/>
+          <path d="M 520 180 C 550 300, 420 500, 500 650 C 600 750, 800 600, 720 280 Z" fill="#C77C4E" opacity="0.85"/>
+          <circle cx="250" cy="550" r="140" fill="#DE9B65" opacity="0.6"/>
+          <circle cx="280" cy="250" r="60" fill="#E9C46A" opacity="0.7"/>
+          <path d="M 100 650 C 250 750, 650 750, 800 650 L 800 800 L 100 800 Z" fill="#FFF2DE" opacity="0.4"/>
+        </g>
+      </g>
+      <path d="M 425 185 Q 435 140 450 175 Q 465 130 475 185" fill="none" stroke="#B86B3E" stroke-width="12" stroke-linecap="round"/>
+      <path d="M 320 670 Q 450 740 580 670 L 570 705 Q 450 770 330 705 Z" fill="#2A9D8F" filter="url(#puppySoftShadow)"/>
+      <polygon points="450,745 475,780 450,815 425,780" fill="#E9C46A" filter="url(#puppyTagShadow)"/>
+      <circle cx="450" cy="762" r="5" fill="#EADFCE"/>
+      <ellipse cx="450" cy="560" rx="170" ry="110" fill="url(#puppyMuzzle)" filter="url(#puppySoftShadow)"/>
+      <circle cx="280" cy="490" r="35" fill="#F26D6D" opacity="0.25"/>
+      <circle cx="620" cy="490" r="35" fill="#F26D6D" opacity="0.25"/>
+      <circle cx="340" cy="540" r="4.5" fill="#B86B3E" opacity="0.7"/>
+      <circle cx="320" cy="565" r="4.5" fill="#B86B3E" opacity="0.7"/>
+      <circle cx="360" cy="570" r="4.5" fill="#B86B3E" opacity="0.7"/>
+      <circle cx="560" cy="540" r="4.5" fill="#B86B3E" opacity="0.7"/>
+      <circle cx="580" cy="565" r="4.5" fill="#B86B3E" opacity="0.7"/>
+      <circle cx="540" cy="570" r="4.5" fill="#B86B3E" opacity="0.7"/>
+      <g class="puppy-eye puppy-eye-l">
+        <ellipse cx="330" cy="400" rx="38" ry="55" fill="#21140F" transform="rotate(-8 330 400)"/>
+        <circle cx="315" cy="380" r="14" fill="#FFFFFF"/>
+        <circle cx="345" cy="425" r="6" fill="#FFFFFF"/>
+        <ellipse cx="335" cy="420" rx="15" ry="8" fill="#78C0E0" transform="rotate(-20 335 420)" opacity="0.85"/>
+      </g>
+      <g class="puppy-eye puppy-eye-r">
+        <ellipse cx="570" cy="400" rx="38" ry="55" fill="#21140F" transform="rotate(8 570 400)"/>
+        <circle cx="555" cy="380" r="14" fill="#FFFFFF"/>
+        <circle cx="585" cy="425" r="6" fill="#FFFFFF"/>
+        <ellipse cx="565" cy="420" rx="15" ry="8" fill="#78C0E0" transform="rotate(20 565 420)" opacity="0.85"/>
+      </g>
+      <path d="M 280 330 Q 320 280 360 290" fill="none" stroke="#3D261D" stroke-width="16" stroke-linecap="round"/>
+      <path d="M 620 330 Q 580 280 540 290" fill="none" stroke="#3D261D" stroke-width="16" stroke-linecap="round"/>
+      <path d="M 415 555 C 415 640, 485 640, 485 555 Z" fill="#F47C7C"/>
+      <line x1="450" y1="555" x2="450" y2="615" stroke="#D95353" stroke-width="6" stroke-linecap="round"/>
+      <path d="M 400 480 C 400 450, 500 450, 500 480 C 500 520, 470 540, 450 540 C 430 540, 400 520, 400 480 Z" fill="#3D261D"/>
+      <ellipse cx="430" cy="475" rx="14" ry="6" fill="#FFFFFF" opacity="0.5" transform="rotate(-15 430 475)"/>
+      <path d="M 450 540 C 450 580, 390 600, 360 560" fill="none" stroke="#3D261D" stroke-width="12" stroke-linecap="round"/>
+      <path d="M 450 540 C 450 580, 510 600, 540 560" fill="none" stroke="#3D261D" stroke-width="12" stroke-linecap="round"/>
+    </g>
+  </svg>
+</div>
+
+<!-- BOTTOM NAV — the puppy's ground -->
 <div class="nav">
-  <button class="nav-btn" id="prev-btn">← Previous</button>
-  <div class="dots" id="dots"></div>
-  <button class="nav-btn" id="next-btn">Next →</button>
+  <svg class="nav-soil" preserveAspectRatio="none" viewBox="0 0 100 90" aria-hidden="true">
+    <defs>
+      <linearGradient id="navSoilGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#C77C4E"/>
+        <stop offset="55%" stop-color="#9E5931"/>
+        <stop offset="100%" stop-color="#6B371F"/>
+      </linearGradient>
+    </defs>
+    <!-- Full height on the right, steps down to zero by the left edge.
+         Each pair of points = one jagged step: rise then small dip. -->
+    <path d="M 100 90 L 0 90
+             L 0 90
+             L 8  82  L 13 86
+             L 21 70  L 26 74
+             L 34 57  L 39 61
+             L 47 45  L 52 49
+             L 60 32  L 65 36
+             L 73 19  L 78 23
+             L 86 9   L 91 13
+             L 100 2
+             Z"
+          fill="url(#navSoilGrad)"/>
+  </svg>
+  <button class="nav-btn" id="prev-btn" aria-label="Previous slide"><span class="nav-arrow" aria-hidden="true">←</span></button>
+  <button class="nav-btn" id="next-btn" aria-label="Next slide"><span class="nav-arrow" aria-hidden="true">→</span></button>
 </div>
 
 <script>
@@ -1209,11 +1967,12 @@ const slideTotal = document.getElementById('slide-total');
 const sectionLabel = document.getElementById('section-label');
 const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
+const slideSelect = document.getElementById('slide-select');
 
 let current = 0;
 slideTotal.textContent = String(total).padStart(2, '0');
 
-// build dots
+// Build dots
 for (let i = 0; i < total; i++) {
   const d = document.createElement('div');
   d.className = 'dot' + (i === 0 ? ' active' : '');
@@ -1222,28 +1981,47 @@ for (let i = 0; i < total; i++) {
 }
 const dots = document.querySelectorAll('.dot');
 
+// Build select options
+for (let i = 0; i < total; i++) {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = `${String(i + 1).padStart(2, '0')}  ${slides[i].dataset.section.toUpperCase()}`;
+  slideSelect.appendChild(opt);
+}
+slideSelect.addEventListener('change', (e) => goTo(+e.target.value));
+
 function goTo(i) {
   if (i < 0 || i >= total || i === current) return;
   const dir = i > current ? 'forward' : 'back';
-  slides[current].classList.remove('active');
-  if (dir === 'back') slides[current].classList.add('prev');
-  slides[i].classList.remove('prev');
-  // force reflow for transition
-  void slides[i].offsetWidth;
+  const outgoing = slides[current];
+  const incoming = slides[i];
+  const enterClass = dir === 'forward' ? 'enter-from-right' : 'enter-from-left';
+  const exitClass = dir === 'forward' ? 'exit-to-left' : 'exit-to-right';
+
+  incoming.classList.remove('active', 'enter-from-right', 'enter-from-left', 'exit-to-left', 'exit-to-right', 'is-staging');
+  incoming.classList.add('is-staging', enterClass);
+  void incoming.offsetWidth;
+  incoming.classList.remove('is-staging');
+
+  outgoing.classList.remove('active', 'enter-from-right', 'enter-from-left');
+  outgoing.classList.add(exitClass);
+  incoming.classList.remove(enterClass);
   slides[i].classList.add('active');
   dots[current].classList.remove('active');
   dots[i].classList.add('active');
+  slideSelect.value = i;
   current = i;
   slideNum.textContent = String(i + 1).padStart(2, '0');
   sectionLabel.textContent = slides[i].dataset.section.toUpperCase();
   prevBtn.disabled = i === 0;
   nextBtn.disabled = i === total - 1;
-  // cleanup prev classes from non-active slides
   setTimeout(() => {
     slides.forEach((s, idx) => {
-      if (idx !== current) s.classList.remove('prev');
+      if (idx !== current) {
+        s.classList.remove('active', 'enter-from-right', 'enter-from-left', 'exit-to-left', 'exit-to-right', 'is-staging');
+      }
     });
-  }, 420);
+  }, 680);
 }
 
 prevBtn.addEventListener('click', () => goTo(current - 1));
