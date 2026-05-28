@@ -128,7 +128,10 @@ body:has(.slide[data-section="Cover"].active) .stage {
   align-items: center;
   gap: 14px;
   padding-top: 4px;
+  text-decoration: none;
 }
+.rail-left:visited { color: var(--black); }
+.rail-left:hover .mark { background: var(--stanford-red-deep); }
 .rail-left .mark {
   display: inline-block;
   width: 10px; height: 10px;
@@ -1230,10 +1233,10 @@ body:has(.slide[data-section="Closing"].active) .puppy-mascot { display: none; }
 
 <!-- TOP RAIL -->
 <div class="rail">
-  <div class="rail-left">
+  <a class="rail-left" href="#01-cover" aria-label="Go to cover slide">
     <span class="mark"></span>
     <span>Local AI &nbsp;·&nbsp; A Field Guide</span>
-  </div>
+  </a>
   <div class="nav-center">
     <div class="dots" id="dots"></div>
     <select id="slide-select" aria-label="Jump to slide"></select>
@@ -1977,7 +1980,33 @@ const nextBtn = document.getElementById('next-btn');
 const slideSelect = document.getElementById('slide-select');
 
 let current = 0;
+let isApplyingHash = false;
 slideTotal.textContent = String(total).padStart(2, '0');
+
+function slideSlug(i) {
+  return `${String(i + 1).padStart(2, '0')}-${slides[i].dataset.section.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+}
+
+function slideIndexFromHash() {
+  const hash = decodeURIComponent(window.location.hash.replace(/^#/, '')).toLowerCase();
+  if (!hash) return 0;
+  const exact = Array.from(slides).findIndex((_, i) => slideSlug(i) === hash);
+  if (exact >= 0) return exact;
+  const numeric = Number.parseInt(hash, 10);
+  if (Number.isInteger(numeric) && numeric >= 1 && numeric <= total) return numeric - 1;
+  return 0;
+}
+
+function updateHash(i, replace = false) {
+  const target = `#${slideSlug(i)}`;
+  if (window.location.hash === target) return;
+  const url = `${window.location.pathname}${window.location.search}${target}`;
+  if (replace) {
+    history.replaceState(null, "", url);
+  } else {
+    history.pushState(null, "", url);
+  }
+}
 
 // Build dots
 for (let i = 0; i < total; i++) {
@@ -2022,6 +2051,7 @@ function goTo(i) {
   sectionLabel.textContent = slides[i].dataset.section.toUpperCase();
   prevBtn.disabled = i === 0;
   nextBtn.disabled = i === total - 1;
+  if (!isApplyingHash) updateHash(i);
   setTimeout(() => {
     slides.forEach((s, idx) => {
       if (idx !== current) {
@@ -2048,7 +2078,32 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-prevBtn.disabled = true;
+function applyInitialSlide() {
+  const initial = slideIndexFromHash();
+  slides.forEach((s, idx) => {
+    s.classList.toggle('active', idx === initial);
+    s.classList.remove('enter-from-right', 'enter-from-left', 'exit-to-left', 'exit-to-right', 'is-staging');
+  });
+  dots[current].classList.remove('active');
+  dots[initial].classList.add('active');
+  current = initial;
+  slideSelect.value = initial;
+  slideNum.textContent = String(initial + 1).padStart(2, '0');
+  sectionLabel.textContent = slides[initial].dataset.section.toUpperCase();
+  prevBtn.disabled = initial === 0;
+  nextBtn.disabled = initial === total - 1;
+  updateHash(initial, true);
+}
+
+window.addEventListener('hashchange', () => {
+  const target = slideIndexFromHash();
+  if (target === current) return;
+  isApplyingHash = true;
+  goTo(target);
+  isApplyingHash = false;
+});
+
+applyInitialSlide();
 </script>
 
 </body>
