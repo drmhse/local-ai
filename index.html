@@ -209,8 +209,7 @@ body:has(.slide[data-section="Cover"].active) .stage {
   outline-offset: 3px;
 }
 body.is-fullscreen .rail,
-body.is-fullscreen .nav,
-body.is-fullscreen .puppy-mascot {
+body.is-fullscreen .nav {
   display: none;
 }
 body.is-fullscreen .stage {
@@ -1002,6 +1001,18 @@ table.compare tr:hover td { background: var(--soft); }
 /* Hide the fixed corner mascot on the closing slide — big one replaces it */
 body:has(.slide[data-section="Cover"].active) .puppy-mascot,
 body:has(.slide[data-section="Closing"].active) .puppy-mascot { display: none; }
+body.is-fullscreen .puppy-mascot,
+body.is-fullscreen:has(.slide[data-section="Cover"].active) .puppy-mascot,
+body.is-fullscreen:has(.slide[data-section="Closing"].active) .puppy-mascot {
+  display: block;
+  top: auto;
+  right: 24px;
+  bottom: 24px;
+  left: auto;
+  width: clamp(104px, 8.5vw, 142px);
+  height: clamp(104px, 8.5vw, 142px);
+  z-index: 90;
+}
 @media (prefers-reduced-motion: reduce) {
   .closing-puppy svg { animation: none !important; transform: scaleY(1); opacity: 1; }
 }
@@ -1180,6 +1191,14 @@ body:has(.slide[data-section="Closing"].active) .puppy-mascot { display: none; }
     bottom: auto;
     left: auto;
   }
+  body.is-fullscreen .puppy-mascot,
+  body.is-fullscreen:has(.slide[data-section="Cover"].active) .puppy-mascot,
+  body.is-fullscreen:has(.slide[data-section="Closing"].active) .puppy-mascot {
+    right: 20px;
+    bottom: 20px;
+    width: clamp(110px, 13vw, 132px);
+    height: clamp(110px, 13vw, 132px);
+  }
   .bg-accent { display: none; }
 }
 
@@ -1336,6 +1355,14 @@ body:has(.slide[data-section="Closing"].active) .puppy-mascot { display: none; }
     bottom: auto;
     left: auto;
   }
+  body.is-fullscreen .puppy-mascot,
+  body.is-fullscreen:has(.slide[data-section="Cover"].active) .puppy-mascot,
+  body.is-fullscreen:has(.slide[data-section="Closing"].active) .puppy-mascot {
+    right: 14px;
+    bottom: 14px;
+    width: 88px;
+    height: 88px;
+  }
   .stage { bottom: 56px; }
 }
 
@@ -1425,11 +1452,11 @@ body:has(.slide[data-section="Closing"].active) .puppy-mascot { display: none; }
       </div>
       <div class="row">
         <div class="term">Architecture</div>
-        <div class="def"><strong>Decoder-only transformers, with variants that matter.</strong> Dense vs <strong>MoE</strong> (only a slice of params activate per token). Attention flavors — GQA, MLA. Positional encoding — RoPE, YaRN. The names show up on every model card.</div>
+        <div class="def"><strong>Decoder-only transformers, with variants that matter.</strong> Dense vs <strong>MoE</strong> (only a slice of params activate per token). Attention flavors change the memory/speed tradeoff: <strong>GQA</strong> shares key/value heads across groups of query heads, shrinking the KV cache; <strong>MLA</strong> compresses attention state through latent vectors, pushing long-context efficiency further. Positional encoding tells the model where tokens sit: <strong>RoPE</strong> rotates attention features by position, while <strong>YaRN</strong> stretches RoPE so models can handle longer context windows. These names show up on every model card because <strong>they affect VRAM, context length, and throughput.</strong></div>
       </div>
       <div class="row">
         <div class="term">MTP</div>
-        <div class="def"><strong>Multi-Token Prediction.</strong> Instead of training to predict only the next token, the model predicts <em>several future tokens</em> via auxiliary heads. Pioneered at scale by DeepSeek-V3 in late 2024, now the default across the 2026 wave — Qwen3-Next, GLM-5, MiMo, LongCat, and Gemma 4 all ship MTP drafters; llama.cpp added beta MTP support this spring. Two payoffs: denser training signal (better quality per FLOP) and <em>free self-speculative decoding</em> at inference — the MTP heads draft ahead, the main model verifies, yielding 2–3.6× generation speedups with no quality loss. If a 2026 release mentions MTP, this is what they mean.</div>
+        <div class="def"><strong>Multi-Token Prediction.</strong> Instead of training to predict only the next token, the model predicts <em>several future tokens</em> via auxiliary heads. Pioneered at scale by DeepSeek-V3 in late 2024, now the default across the 2026 wave — Qwen3-Next, GLM-5, MiMo, LongCat, and Gemma 4 all ship MTP drafters; llama.cpp added beta MTP support in May 2026. Two payoffs: denser training signal (better quality per FLOP) and <em>free self-speculative decoding</em> at inference — the MTP heads draft ahead, the main model verifies, yielding 2–3.6× generation speedups with no quality loss. If a 2026 release mentions MTP, this is what they mean.</div>
       </div>
     </div>
   </section>
@@ -1515,7 +1542,7 @@ body:has(.slide[data-section="Closing"].active) .puppy-mascot { display: none; }
     <table class="compare">
       <thead><tr><th>Runtime</th><th>Best for</th><th>Interface</th><th>Notable</th></tr></thead>
       <tbody>
-        <tr><td>llama.cpp</td><td>Maximum compatibility, CPU + GPU</td><td>CLI / C++ library</td><td>The engine under nearly everything else. GGUF native. Beta MTP / speculative decoding as of spring 2026.</td></tr>
+        <tr><td>llama.cpp</td><td>Maximum compatibility, CPU + GPU</td><td>CLI / C++ library</td><td>The engine under nearly everything else. GGUF native. Beta MTP / speculative decoding as of May 2026.</td></tr>
         <tr><td>Ollama</td><td>Beginners, fast setup</td><td>CLI + REST API</td><td>One-liner installs. <code class="inline">ollama run qwen3</code> · <code class="inline">ollama run gemma4</code>.</td></tr>
         <tr><td>LM Studio</td><td>GUI users, model discovery</td><td>Desktop app</td><td>Built-in chat, model browser, OpenAI-compatible server.</td></tr>
         <tr><td>vLLM</td><td>Production serving, throughput</td><td>Python server</td><td>PagedAttention, continuous batching. Datacenter-grade.</td></tr>
