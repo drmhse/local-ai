@@ -1005,9 +1005,7 @@ table.compare tr:hover td { background: var(--soft); }
 /* Hide the fixed corner mascot on the closing slide — big one replaces it */
 body:has(.slide[data-section="Cover"].active) .puppy-mascot,
 body:has(.slide[data-section="Closing"].active) .puppy-mascot { display: none; }
-body.is-fullscreen .puppy-mascot,
-body.is-fullscreen:has(.slide[data-section="Cover"].active) .puppy-mascot,
-body.is-fullscreen:has(.slide[data-section="Closing"].active) .puppy-mascot {
+body.is-fullscreen:not(:has(.slide[data-section="Cover"].active)):not(:has(.slide[data-section="Closing"].active)) .puppy-mascot {
   display: block;
   top: auto;
   right: 24px;
@@ -1016,6 +1014,10 @@ body.is-fullscreen:has(.slide[data-section="Closing"].active) .puppy-mascot {
   width: clamp(104px, 8.5vw, 142px);
   height: clamp(104px, 8.5vw, 142px);
   z-index: 90;
+}
+body.is-fullscreen:has(.slide[data-section="Cover"].active) .puppy-mascot,
+body.is-fullscreen:has(.slide[data-section="Closing"].active) .puppy-mascot {
+  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .closing-puppy svg { animation: none !important; transform: scaleY(1); opacity: 1; }
@@ -1195,9 +1197,7 @@ body.is-fullscreen:has(.slide[data-section="Closing"].active) .puppy-mascot {
     bottom: auto;
     left: auto;
   }
-  body.is-fullscreen .puppy-mascot,
-  body.is-fullscreen:has(.slide[data-section="Cover"].active) .puppy-mascot,
-  body.is-fullscreen:has(.slide[data-section="Closing"].active) .puppy-mascot {
+  body.is-fullscreen:not(:has(.slide[data-section="Cover"].active)):not(:has(.slide[data-section="Closing"].active)) .puppy-mascot {
     right: 20px;
     bottom: 20px;
     width: clamp(110px, 13vw, 132px);
@@ -1359,9 +1359,7 @@ body.is-fullscreen:has(.slide[data-section="Closing"].active) .puppy-mascot {
     bottom: auto;
     left: auto;
   }
-  body.is-fullscreen .puppy-mascot,
-  body.is-fullscreen:has(.slide[data-section="Cover"].active) .puppy-mascot,
-  body.is-fullscreen:has(.slide[data-section="Closing"].active) .puppy-mascot {
+  body.is-fullscreen:not(:has(.slide[data-section="Cover"].active)):not(:has(.slide[data-section="Closing"].active)) .puppy-mascot {
     right: 14px;
     bottom: 14px;
     width: 88px;
